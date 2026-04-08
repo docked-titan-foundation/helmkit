@@ -31,3 +31,5 @@ Thumbs.db
 .env.local
 
 .kilo/
+
+node_modules/
