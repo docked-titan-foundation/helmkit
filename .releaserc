@@ -16,7 +16,7 @@
     [
       "@semantic-release/github",
       {
-        "addReleases": "auto"
+        "addReleases": "bottom"
       }
     ],
     [
