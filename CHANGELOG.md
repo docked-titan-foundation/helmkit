@@ -1,3 +1,10 @@
+# 1.0.0 (2026-04-12)
+
+
+### Features
+
+* Helmkit - Alpine-based Docker image with Helm, Helmfile, kubectl, Helm Diff, Helm Secrets, and SOPS ([efd6c01](https://github.com/docked-titan-foundation/helmkit/commit/efd6c01140add3e9ba256e6a57a5e4b9b351193b))
+
 # [1.1.0](https://github.com/docked-titan-foundation/helmkit/compare/v1.0.0...v1.1.0) (2026-04-12)
 
 
