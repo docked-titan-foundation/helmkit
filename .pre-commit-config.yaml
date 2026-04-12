@@ -1,0 +1,22 @@
+---
+repos:
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+  - repo: local
+    hooks:
+      - id: docker-build
+        name: Build Docker image
+        entry: sh
+        args: ["-c", "DOCKER_BUILDKIT=0 docker build -t helmkit-test ."]
+        language: system
+        stages: [pre-commit]
+        files: ^Dockerfile$
+      - id: integration-test
+        name: Run integration tests
+        entry: sh
+        args: ["-c", "docker run --rm -v ./tests/integration/test-helmkit.sh:/workspace/tests/integration/test-helmkit.sh:ro helmkit-test /bin/bash /workspace/tests/integration/test-helmkit.sh"]
+        language: system
+        stages: [pre-commit]
+        always_run: true
