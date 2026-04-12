@@ -1,0 +1,35 @@
+# .dockerignore
+
+# Version control
+.git
+.gitignore
+
+# CI/CD configs (not needed in image)
+.github/
+.pre-commit-config.yaml
+.hadolint.yaml
+.releaserc
+
+# Documentation
+*.md
+LICENSE
+SECURITY.md
+CONTRIBUTING.md
+
+# Node.js (semantic-release deps)
+node_modules/
+package.json
+package-lock.json
+
+# Build artifacts
+*.tar.gz
+*.zip
+
+# Local dev
+.env
+.env.*
+*.local
+
+# Test artifacts
+coverage/
+test-results/
