@@ -70,6 +70,19 @@ Or specific version:
 docker pull ghcr.io/docked-titan-foundation/helmkit:v{VERSION}
 ```
 
+## 🔧 Reusable GitHub Actions
+
+HelmKit provides reusable GitHub Actions for Helm and Helmfile operations.
+
+| Action | Description |
+|--------|-------------|
+| [actions/helm](./actions/helm) | Run Helm commands |
+| [actions/helmfile](./actions/helmfile) | Run Helmfile commands |
+
+See [actions/README.md](./actions/README.md) for detailed usage.
+
+---
+
 ## 🚀 Usage
 
 Run helmfile commands interactively:
@@ -208,17 +221,24 @@ This roadmap tracks the progress of the Helmkit Docker Image.
 - [x] Pre commit configurations
     - [x] Lint Dockerfile
     - [x] Build Dockerfile
+      - [x] Helmkit
+      - [x] Helmkit Actions
     - [x] Integration Test
-- [x] Sign
+      - [x] Helmkit
+      - [x] Helmkit Actions
+- [x] Signed
     - [x] Docker image
     - [x] Tags/Releases
 - [x] Docker image available
-- [x] Automated Testing of the docker images built
-
+- [x] Actions
+  - [x] Helmkit
+  - [x] Helmkit Actions
 
 ## 🚧 In Progress
 - [ ] Image maintenance
-- [ ] More Integration testing scenarios
+- [ ] Funding
+
+## 📋 Planned
 
 ## 📋 Planned
 - [ ] Pre release Versioning
@@ -231,6 +251,7 @@ This roadmap tracks the progress of the Helmkit Docker Image.
 - [ ] No Negative Test Cases
 - [ ] Layer Optimization and Cache Efficiency
 - [ ] Rebuild workflow
+- [ ] More Integration testing scenarios
 
 ## 📜 License
 
