@@ -17,46 +17,25 @@ Helmkit provides a lightweight Alpine-based Docker image with Helm, Helmfile, ku
 - Helm Diff (diff plugin)
 - Helm Secrets (secrets plugin)
 - SOPS (Secrets OPerationS - encrypted secrets management)
+- age (age-based encryption)
+- Reusable GitHub Actions for Helm and Helmfile operations
 
 ## 📋 Version Matrix
 
-| Version | Helm | Helmfile | Kubectl | Helm Diff | Helm Secrets | SOPS | Date |
+| Version | Helm | Helmfile | Kubectl | Helm Diff | Helm Secrets | SOPS | age | Date |
 |---------|------|---------|--------|----------|--------------|-----|------|
-| 1.0.0 (latest)  | 3.15.0 | 1.4.3 | 1.30.0 | 3.10.0 | 3.2.0 | 3.12.2 | 2026-04-08|
+| 1.1.0 (latest)  | 3.15.0 | 1.4.3 | 1.30.0 | 3.10.0 | 4.6.2 | 3.12.2 | 1.2.1 | 2026-04-12|
+| 1.0.0           | 3.15.0 | 1.4.3 | 1.30.0 | 3.10.0 | 4.6.2 | 3.12.2 | 1.2.1 | 2026-04-12|
 
-[Changelog](./CHANGELOG.md)
+See [Changelog](./CHANGELOG.md) for more details.
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and development guidelines.
-
-## 🔄 Pipeline Flow
-
-```
-lint
- └─▶ release
-       └─▶ build (local only)
-             └─▶ test (versions, plugins, non-root)
-                   └─▶ security scan (CRITICAL/HIGH = fail)
-                         └─▶ SBOM generation
-                               └─▶ push (first public appearance)
-                                     └─▶ sign
-                                           └─▶ attach + sign SBOM
-```
-
-| Gate | Description |
-|------|-------------|
-| **Lint** | Dockerfile, YAML, and Markdown linting |
-| **Release** | Semantic versioning on main branch (GPG signed commits) |
-| **Build** | Docker image built locally (no push) |
-| **Test** | Version validation (Helm, Helmfile, kubectl, SOPS), plugin checks (diff, secrets), non-root user |
-| **Security Scan** | Trivy vulnerability scanner (CRITICAL/HIGH = fail) |
-| **SBOM Generation** | SPDX JSON Software Bill of Materials |
-| **Push** | First public appearance to GitHub Container Registry |
-| **Sign** | Cosign image signing |
-| **Attach + Sign SBOM** | Attach and sign SBOM with Cosign |
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development guidelines, and pipeline flow.
 
 ## 🐳 Docker Image
+
+### HelmKit Image
 
 Pull the image from GitHub Container Registry:
 
@@ -68,6 +47,35 @@ Or specific version:
 
 ```bash
 docker pull ghcr.io/docked-titan-foundation/helmkit:v{VERSION}
+```
+
+### HelmKit Actions Image
+
+The HelmKit Actions image is a reusable GitHub Action based on the HelmKit image. Build and use it locally:
+
+```bash
+# Build the actions image
+docker build -t ghcr.io/docked-titan-foundation/helmkit/actions:latest actions/
+
+# Run Helm commands
+docker run --rm -v $(pwd):/workspace ghcr.io/docked-titan-foundation/helmkit/actions:latest helm version
+
+# Run Helmfile commands
+docker run --rm -v $(pwd):/workspace ghcr.io/docked-titan-foundation/helmkit/actions:latest helmfile version
+```
+
+Or use the actions directly in your workflow:
+
+```yaml
+jobs:
+  helm-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Helm Version
+        uses: ./actions/helm
+        with:
+          args: "version --short"
 ```
 
 ## 🔧 Reusable GitHub Actions
@@ -172,33 +180,6 @@ docker run \
   -v ~/.kube:/home/helmkit/.kube:ro \
   ghcr.io/docked-titan-foundation/helmkit:latest \
   helmfile diff
-```
-
-## 🔄 CI/CD Integration
-
-### GitHub Actions
-```yaml
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/docked-titan-foundation/helmkit:latest
-      options: --user 1000:1000 --read-only
-    steps:
-      - uses: actions/checkout@v4
-      - name: Helmfile Diff
-        run: helmfile diff
-      - name: Helmfile Apply
-        run: helmfile apply
-```
-
-### GitLab CI
-```yaml
-deploy:
-  image: ghcr.io/docked-titan-foundation/helmkit:latest
-  script:
-    - helmfile diff
-    - helmfile apply
 ```
 
 ## ⚙️ Requirements

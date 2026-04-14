@@ -66,6 +66,34 @@ Obtain checksums from the official release page, never from third-party sources.
 - Specify explicit versions for binaries
 - Keep the image size minimal
 
+## Pipeline Flow
+
+The HelmKit project uses a gated pipeline for quality and security:
+
+```
+lint
+ └─▶ release
+       └─▶ build (local only)
+             └─▶ test (versions, plugins, non-root)
+                   └─▶ security scan (CRITICAL/HIGH = fail)
+                         └─▶ SBOM generation
+                               └─▶ push (first public appearance)
+                                     └─▶ sign
+                                           └─▶ attach + sign SBOM
+```
+
+| Gate | Description |
+|------|-------------|
+| **Lint** | Dockerfile, YAML, and Markdown linting |
+| **Release** | Semantic versioning on main branch (GPG signed commits) |
+| **Build** | Docker image built locally (no push) |
+| **Test** | Version validation (Helm, Helmfile, kubectl, SOPS), plugin checks (diff, secrets), non-root user |
+| **Security Scan** | Trivy vulnerability scanner (CRITICAL/HIGH = fail) |
+| **SBOM Generation** | SPDX JSON Software Bill of Materials |
+| **Push** | First public appearance to GitHub Container Registry |
+| **Sign** | Cosign image signing |
+| **Attach + Sign SBOM** | Attach and sign SBOM with Cosign |
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the GNU General Public License v3.0.
