@@ -1,0 +1,10 @@
+# Default values for test-chart
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 80
+
+image:
+  repository: nginx
+  tag: "1.21"

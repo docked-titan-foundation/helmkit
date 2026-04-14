@@ -1,0 +1,9 @@
+repositories:
+  - name: stable
+    url: https://charts.helm.sh/stable
+
+releases:
+  - name: test-release
+    chart: ./test-chart
+    values:
+      - ./test-chart/values.yaml

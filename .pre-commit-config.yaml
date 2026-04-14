@@ -6,6 +6,13 @@ repos:
       - id: hadolint-docker
   - repo: local
     hooks:
+      - id: hadolint-main
+        name: Lint main Dockerfile
+        entry: sh
+        args: ["-c", "docker run --rm -v $PWD:/workspace -w /workspace helmkit-test sh -c 'apk add --no-cache npm && npm install -g hadolint && hadolint Dockerfile'"]
+        language: system
+        stages: [pre-commit]
+        files: ^Dockerfile$
       - id: docker-build
         name: Build Docker image
         entry: sh
@@ -13,10 +20,24 @@ repos:
         language: system
         stages: [pre-commit]
         files: ^Dockerfile$
+      - id: hadolint-actions
+        name: Lint actions Dockerfile
+        entry: sh
+        args: ["-c", "docker run --rm -v $PWD:/workspace -w /workspace helmkit-test sh -c 'apk add --no-cache npm && npm install -g hadolint && hadolint actions/Dockerfile'"]
+        language: system
+        stages: [pre-commit]
+        files: ^actions/Dockerfile$
+      - id: docker-action-build
+        name: Build Docker Actions image
+        entry: sh
+        args: ["-c", "DOCKER_BUILDKIT=0 docker build -t helmkit-action-test actions/"]
+        language: system
+        stages: [pre-commit]
+        files: ^actions/Dockerfile$
       - id: integration-test
         name: Run integration tests
         entry: sh
-        args: ["-c", "docker run --rm -v ./tests/integration/test-helmkit.sh:/workspace/tests/integration/test-helmkit.sh:ro helmkit-test /bin/bash /workspace/tests/integration/test-helmkit.sh"]
+        args: ["-c", "docker run --rm -v ./tests/integration/test-helmkit.sh:/workspace/tests/integration/test-helmkit.sh:ro -v ./tests/integration/test-actions.sh:/workspace/tests/integration/test-actions.sh:ro helmkit-test /bin/bash /workspace/tests/integration/test-helmkit.sh && docker run --rm -v ./tests/integration/test-helmkit.sh:/workspace/tests/integration/test-helmkit.sh:ro -v ./tests/integration/test-actions.sh:/workspace/tests/integration/test-actions.sh:ro helmkit-action-test /bin/bash /workspace/tests/integration/test-actions.sh"]
         language: system
         stages: [pre-commit]
         always_run: true

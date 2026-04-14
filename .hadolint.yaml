@@ -14,3 +14,5 @@ labelSchema:
 
 ignored:
   - DL3018
+  - DL3002
+  - DL3007

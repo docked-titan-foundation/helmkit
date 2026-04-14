@@ -46,6 +46,7 @@ This security policy applies to the helmkit Docker image and its included tools:
 - kubectl
 - Helm Diff
 - Helm Secrets
+- SOPS
 
 Vulnerabilities in third-party tools bundled in the image should be reported to their respective maintainers.
 
