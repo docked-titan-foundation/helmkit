@@ -19,6 +19,11 @@ jobs:
         with:
           dockerfile: Dockerfile
 
+      - name: Lint actions Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: actions/Dockerfile
+
   # ─── GATE 2: Versioning (only on main) ────────────────────────────
   release:
     needs: lint
@@ -130,12 +135,31 @@ jobs:
             org.opencontainers.image.title=${{ github.event.repository.name }}
 
       # ─── GATE 4: Integration Tests ────────────────────────────────
-      - name: Run integration tests
+      - name: Set up Docker Buildx for actions
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build actions image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./actions
+          push: false
+          load: true
+          tags: |
+            ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+
+      - name: Run helmkit integration tests
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/tests/integration/test-helmkit.sh:/workspace/tests/integration/test-helmkit.sh:ro \
             ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }} \
             /bin/bash /workspace/tests/integration/test-helmkit.sh
+
+      - name: Run actions integration tests
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/tests/integration/test-actions.sh:/workspace/tests/integration/test-actions.sh:ro \
+            ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }} \
+            /bin/bash /workspace/tests/integration/test-actions.sh
 
       # ─── GATE 5: Security Scan ──────────────────────────────────────
       - name: Run Trivy vulnerability scanner
@@ -163,6 +187,31 @@ jobs:
         with:
           sarif_file: trivy-results.sarif
 
+      - name: Run Trivy on actions image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+          format: sarif
+          output: trivy-actions-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Check for critical vulnerabilities in actions image
+        run: |
+          if [ -f trivy-actions-results.sarif ]; then
+            CRITICAL_COUNT=$(cat trivy-actions-results.sarif | grep -o '"level":"error"' | wc -l)
+            if [ "$CRITICAL_COUNT" -gt 0 ]; then
+              echo "Found $CRITICAL_COUNT critical vulnerabilities in actions image"
+              exit 1
+            fi
+          fi
+
+      - name: Upload Trivy results for actions to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: ${{ success() && hashFiles('trivy-actions-results.sarif') }}
+        with:
+          sarif_file: trivy-actions-results.sarif
+
       # ─── GATE 6: SBOM ───────────────────────────────────────────────
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
@@ -176,6 +225,19 @@ jobs:
         with:
           name: sbom-${{ needs.release.outputs.new_release_version }}
           path: sbom.spdx.json
+
+      - name: Generate SBOM for actions image
+        uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+          format: spdx-json
+          output-file: sbom-actions.spdx.json
+
+      - name: Upload actions SBOM as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-actions-${{ needs.release.outputs.new_release_version }}
+          path: sbom-actions.spdx.json
 
       # ─── GATE 7: Push (only after everything passed) ────────────────
       - name: Login to GitHub Container Registry
@@ -201,6 +263,19 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.version=${{ needs.release.outputs.new_release_version }}
             org.opencontainers.image.title=${{ github.event.repository.name }}
+
+      - name: Push actions image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./actions
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+            ghcr.io/${{ github.repository }}/actions:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.version=${{ needs.release.outputs.new_release_version }}
+            org.opencontainers.image.title=${{ github.event.repository.name }}-actions
 
   # ─── GATE 8: Sign ─────────────────────────────────────────────────
   sign:
@@ -239,3 +314,22 @@ jobs:
 
           cosign sign --yes --attachment sbom \
             ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
+
+      - name: Sign actions image
+        run: |
+          cosign sign --yes \
+            ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+
+      - name: Download actions SBOM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-actions-${{ needs.release.outputs.new_release_version }}
+
+      - name: Attach and sign actions SBOM
+        run: |
+          cosign attach sbom \
+            --sbom sbom-actions.spdx.json \
+            ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+
+          cosign sign --yes --attachment sbom \
+            ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
