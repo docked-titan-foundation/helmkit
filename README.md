@@ -198,7 +198,9 @@ This roadmap tracks the progress of the Helmkit Docker Image.
 ## ✅ Completed
 - [x] Semantic Release versioning configured
     - [x] Beta versions  
-- [x] CI/CD workflow
+- [x] Pipelines
+  - [x] main CI/CD
+  - [x] PR CI/CD
 - [x] Pre commit configurations
     - [x] Lint Dockerfile
     - [x] Build Dockerfile
@@ -233,6 +235,7 @@ This roadmap tracks the progress of the Helmkit Docker Image.
 - [ ] Layer Optimization and Cache Efficiency
 - [ ] Rebuild workflow
 - [ ] More Integration testing scenarios
+- [ ] Add commitlint
 
 ## 📜 License
 
