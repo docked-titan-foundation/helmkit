@@ -58,10 +58,6 @@ jobs:
 
       - name: Run semantic-release dry-run (config validation only)
         id: dry-run
-        # GH_TOKEN is deliberately withheld so @semantic-release/github
-        # cannot post comments, create releases, or write anything.
-        # We capture output only to report the release type back to the
-        # PR author as a convenience — no downstream job depends on it.
         run: |
           OUTPUT=$(npx semantic-release \
             --dry-run \
@@ -69,31 +65,20 @@ jobs:
             --branches "${{ github.head_ref }}" \
             2>&1) || true
 
+          # ── Debug: print raw output so we can see what to parse ───
+          echo "=== RAW SEMANTIC-RELEASE OUTPUT ==="
           echo "$OUTPUT"
+          echo "=== END RAW OUTPUT ==="
 
-          # ── Parse release type ────────────────────────────────────
-          RELEASE_TYPE=$(echo "$OUTPUT" \
-            | grep -oP 'Analysis of \d+ commits complete: \K\w+' \
-            | head -1 || echo "")
-
-          # ── Determine if a release would be triggered ─────────────
-          if echo "$OUTPUT" | grep -q "There are no relevant changes"; then
-            WILL_RELEASE="false"
-          elif [ -n "$RELEASE_TYPE" ]; then
-            WILL_RELEASE="true"
-          else
-            WILL_RELEASE="unknown"
-          fi
-
-          echo "release_type=${RELEASE_TYPE:-none}" >> "$GITHUB_OUTPUT"
-          echo "will_release=$WILL_RELEASE"         >> "$GITHUB_OUTPUT"
-
-          # ── Persist for the comment step ──────────────────────────
           echo "$OUTPUT" > /tmp/sr-output.txt
+
           {
-            echo "WILL_RELEASE=$WILL_RELEASE"
-            echo "RELEASE_TYPE=${RELEASE_TYPE:-none}"
+            echo "WILL_RELEASE=unknown"
+            echo "RELEASE_TYPE=none"
           } >> "$GITHUB_ENV"
+
+          echo "release_type=none" >> "$GITHUB_OUTPUT"
+          echo "will_release=unknown" >> "$GITHUB_OUTPUT"
 
       - name: Post release-check summary as PR comment
         uses: actions/github-script@v7
@@ -262,6 +247,7 @@ jobs:
         if: success() || failure()
         with:
           sarif_file: trivy-results.sarif
+          category: trivy-main
 
       - name: Run Trivy on actions image
         uses: aquasecurity/trivy-action@master
@@ -285,6 +271,7 @@ jobs:
         if: success() || failure()
         with:
           sarif_file: trivy-actions-results.sarif
+          category: trivy-actions
 
       # ── SBOM ──────────────────────────────────────────────────────
       - name: Generate SBOM for main image
