@@ -1,0 +1,31 @@
+name: "HelmKit Helmfile"
+description: "Run Helmfile commands using HelmKit"
+author: "HelmKit"
+branding:
+  icon: "box"
+  color: "blue"
+
+inputs:
+  args:
+    description: "Arguments passed to helmfile command"
+    required: false
+    default: ""
+
+outputs:
+  exit-code:
+    description: "Exit code from helmfile command"
+  output:
+    description: "Output from helmfile command"
+
+runs:
+  using: "docker"
+  image: "../Dockerfile"
+  cmd: ["helmfile", "${{ inputs.args }}"]
+
+credentials:
+  username:
+    description: "Username for image registry"
+    required: false
+  password:
+    description: "Password/token for image registry"
+    required: false

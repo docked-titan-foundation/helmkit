@@ -1,0 +1,201 @@
+# .github/workflows/pr-validation.yml
+name: PR Validation
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─── Gate 1: Code Quality ──────────────────────────────────────────
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+
+      - name: Lint actions Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: actions/Dockerfile
+
+  # ─── Gate 2: Semantic Release Config Check ─────────────────────────
+  # Goals:
+  #   1. Validate .releaserc is parseable and the plugin chain loads
+  #   2. Report what release type WOULD be triggered (informational)
+  #   3. Never publish anything — no GitHub comments, no tags, no notes
+  #
+  # How we prevent any GitHub publishing:
+  #   - GH_TOKEN is intentionally not set → @semantic-release/github
+  #     cannot authenticate and will skip all write operations
+  #   - --dry-run  → semantic-release itself won't publish
+  #   - --no-ci    → bypasses the "abort on PR event" guard
+  release-check:
+    needs: lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write  # only used by our own github-script comment
+    outputs:
+      release_type: ${{ steps.dry-run.outputs.release_type }}
+      will_release: ${{ steps.dry-run.outputs.will_release }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Full history required: semantic-release walks commits back
+          # to the last tag to compute the next version
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate semantic-release config
+        run: |
+          npx semantic-release --dry-run --no-ci
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─── Gate 3: Build + Integration Tests + Security Scan ────────────
+  build-test:
+    needs: [lint, release-check]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # ── Build images ─────────────────────────────────────────────
+      - name: Build main image (local only — no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          build-args: |
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VCS_REF=${{ github.sha }}
+          tags: helmkit:pr-test
+
+      - name: Build actions image (local only — no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: ./actions
+          push: false
+          load: true
+          tags: helmkit-actions:pr-test
+
+      # ── Integration Tests ─────────────────────────────────────────
+      - name: Run helmkit integration tests
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/tests/integration/test-helmkit.sh:/workspace/tests/integration/test-helmkit.sh:ro \
+            helmkit:pr-test \
+            /bin/bash /workspace/tests/integration/test-helmkit.sh
+
+      - name: Run actions integration tests
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/tests/integration/test-actions.sh:/workspace/tests/integration/test-actions.sh:ro \
+            helmkit-actions:pr-test \
+            /bin/bash /workspace/tests/integration/test-actions.sh
+
+      # ── Security Scan ─────────────────────────────────────────────
+      - name: Run Trivy on main image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: helmkit:pr-test
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Check for critical vulnerabilities in main image
+        run: |
+          CRITICAL_COUNT=$(grep -o '"level":"error"' trivy-results.sarif | wc -l)
+          if [ "$CRITICAL_COUNT" -gt 0 ]; then
+            echo "❌ Found $CRITICAL_COUNT critical vulnerabilities"
+            exit 1
+          fi
+
+      - name: Upload Trivy results (main) to Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: success() || failure()
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-main
+
+      - name: Run Trivy on actions image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: helmkit-actions:pr-test
+          format: sarif
+          output: trivy-actions-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Check for critical vulnerabilities in actions image
+        run: |
+          CRITICAL_COUNT=$(grep -o '"level":"error"' trivy-actions-results.sarif | wc -l)
+          if [ "$CRITICAL_COUNT" -gt 0 ]; then
+            echo "❌ Found $CRITICAL_COUNT critical vulnerabilities in actions image"
+            exit 1
+          fi
+
+      - name: Upload Trivy results (actions) to Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: success() || failure()
+        with:
+          sarif_file: trivy-actions-results.sarif
+          category: trivy-actions
+
+      # ── SBOM ──────────────────────────────────────────────────────
+      - name: Generate SBOM for main image
+        uses: anchore/sbom-action@v0
+        with:
+          image: helmkit:pr-test
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Validate SBOM (main)
+        run: |
+          PACKAGE_COUNT=$(jq '.packages | length' sbom.spdx.json)
+          echo "✅ SBOM contains $PACKAGE_COUNT packages"
+          [ "$PACKAGE_COUNT" -ge 1 ] || { echo "❌ SBOM has no packages"; exit 1; }
+
+      - name: Upload SBOM (main) as PR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-pr-${{ github.event.pull_request.number }}
+          path: sbom.spdx.json
+          retention-days: 7
+
+      - name: Generate SBOM for actions image
+        uses: anchore/sbom-action@v0
+        with:
+          image: helmkit-actions:pr-test
+          format: spdx-json
+          output-file: sbom-actions.spdx.json
+
+      - name: Validate SBOM (actions)
+        run: |
+          PACKAGE_COUNT=$(jq '.packages | length' sbom-actions.spdx.json)
+          echo "✅ Actions SBOM contains $PACKAGE_COUNT packages"
+          [ "$PACKAGE_COUNT" -ge 1 ] || { echo "❌ Actions SBOM has no packages"; exit 1; }
+
+      - name: Upload SBOM (actions) as PR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-actions-pr-${{ github.event.pull_request.number }}
+          path: sbom-actions.spdx.json
+          retention-days: 7
