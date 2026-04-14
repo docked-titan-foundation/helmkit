@@ -1,0 +1,382 @@
+# .github/workflows/pr-validation.yml
+name: PR Validation (Pre-merge Gate Simulation)
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─── Gate 1: Code Quality ──────────────────────────────────────────
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+
+      - name: Lint actions Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: actions/Dockerfile
+
+  # ─── Gate 2: Semantic Release Dry-run ─────────────────────────────
+  # Validates your .releaserc / release config is correctly structured
+  # and previews what version + changelog WOULD be published on merge.
+  #
+  # Why --no-ci:   skips the "are we in a PR?" guard semantic-release enforces
+  # Why --branches: tells semantic-release to treat the PR head as a valid
+  #                 release branch so it can walk the commit history
+  # Why unset GITHUB_ACTIONS: prevents the @semantic-release/github plugin
+  #                           from detecting GitHub Actions CI mode, which
+  #                           would abort early on a pull_request event
+  release-dry-run:
+    needs: lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read       # read commits + tags
+      issues: write        # needed by @semantic-release/github dry-run
+      pull-requests: write # post the dry-run summary as a PR comment
+    outputs:
+      # Expose the predicted version downstream so build-test can tag
+      # the local image with it — makes the test environment realistic
+      predicted_version: ${{ steps.dry-run.outputs.predicted_version }}
+      release_type:      ${{ steps.dry-run.outputs.release_type }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # Full history is required: semantic-release walks every commit
+          # back to the last tag to determine the next version number
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run semantic-release dry-run
+        id: dry-run
+        # unset GITHUB_ACTIONS so the GitHub plugin does not abort when
+        # it detects a pull_request event context
+        run: |
+          unset GITHUB_ACTIONS
+
+          OUTPUT=$(npx semantic-release \
+            --dry-run \
+            --no-ci \
+            --branches "${{ github.head_ref }}" \
+            2>&1) || true
+
+          echo "$OUTPUT"
+
+          # ── Parse predicted version ──────────────────────────────
+          VERSION=$(echo "$OUTPUT" \
+            | grep -oP 'The next release version is \K[0-9]+\.[0-9]+\.[0-9]+[^\s]*' \
+            | head -1 || echo "")
+
+          # ── Parse release type (major / minor / patch) ───────────
+          RELEASE_TYPE=$(echo "$OUTPUT" \
+            | grep -oP 'Analysis of \d+ commits complete: \K\w+' \
+            | head -1 || echo "")
+
+          # ── Parse whether a release would actually be triggered ───
+          if echo "$OUTPUT" | grep -q "There are no relevant changes"; then
+            WILL_RELEASE="false"
+          elif [ -n "$VERSION" ]; then
+            WILL_RELEASE="true"
+          else
+            WILL_RELEASE="unknown"
+          fi
+
+          # ── Capture release notes block ──────────────────────────
+          # Everything between the first "Release note" header line
+          # and the next semantic-release log line
+          NOTES=$(echo "$OUTPUT" \
+            | awk '/Release note for version/{found=1; next} found && /\[semantic-release\]/{exit} found{print}' \
+            || echo "_No release notes generated._")
+
+          # ── Write step outputs ───────────────────────────────────
+          echo "predicted_version=${VERSION:-0.0.0-no-release}" >> "$GITHUB_OUTPUT"
+          echo "release_type=${RELEASE_TYPE:-none}"             >> "$GITHUB_OUTPUT"
+          echo "will_release=$WILL_RELEASE"                     >> "$GITHUB_OUTPUT"
+
+          # ── Save full output for the PR comment step ─────────────
+          # Use a file to avoid multi-line quoting issues in env vars
+          echo "$OUTPUT" > /tmp/sr-dry-run-output.txt
+          {
+            echo "WILL_RELEASE=$WILL_RELEASE"
+            echo "VERSION=${VERSION:-none}"
+            echo "RELEASE_TYPE=${RELEASE_TYPE:-none}"
+          } >> "$GITHUB_ENV"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Post a structured summary comment on the PR so reviewers can see
+      # at a glance whether this branch would trigger a release and what
+      # the predicted version + changelog would look like
+      - name: Post dry-run summary as PR comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const rawOutput = fs.readFileSync('/tmp/sr-dry-run-output.txt', 'utf8');
+
+            const willRelease  = process.env.WILL_RELEASE;
+            const version      = process.env.VERSION;
+            const releaseType  = process.env.RELEASE_TYPE;
+
+            // ── Build the badge line ─────────────────────────────────
+            let badge = '';
+            if (willRelease === 'true') {
+              const colour = releaseType === 'major' ? 'red'
+                           : releaseType === 'minor' ? 'orange'
+                           : 'brightgreen';
+              badge = `![release](https://img.shields.io/badge/release-${releaseType}%20v${version}-${colour})`;
+            } else if (willRelease === 'false') {
+              badge = `![release](https://img.shields.io/badge/release-no%20release%20triggered-lightgrey)`;
+            } else {
+              badge = `![release](https://img.shields.io/badge/release-unknown-yellow)`;
+            }
+
+            // ── Extract just the release notes block ─────────────────
+            const lines = rawOutput.split('\n');
+            let notesLines = [];
+            let capturing = false;
+            for (const line of lines) {
+              if (line.includes('Release note for version')) { capturing = true; continue; }
+              if (capturing && line.includes('[semantic-release]'))  { break; }
+              if (capturing) notesLines.push(line);
+            }
+            const notes = notesLines.join('\n').trim() || '_No release notes would be generated._';
+
+            // ── Compose the comment body ──────────────────────────────
+            const HEADER = '## 🚀 Semantic Release Dry-run Report';
+            const body = [
+              HEADER,
+              badge,
+              '',
+              '| Field | Value |',
+              '|---|---|',
+              `| **Would release?** | ${willRelease === 'true' ? '✅ Yes' : willRelease === 'false' ? '⏭ No' : '⚠️ Unknown'} |`,
+              `| **Predicted version** | ${version || 'n/a'} |`,
+              `| **Release type** | ${releaseType || 'n/a'} |`,
+              `| **Branch** | \`${{ github.head_ref }}\` |`,
+              '',
+              '<details>',
+              '<summary>📋 Predicted release notes</summary>',
+              '',
+              '```markdown',
+              notes,
+              '```',
+              '</details>',
+              '',
+              '<details>',
+              '<summary>🔍 Full semantic-release output</summary>',
+              '',
+              '```',
+              rawOutput.slice(0, 6000),   // GitHub comment cap ~65k but keep it readable
+              rawOutput.length > 6000 ? '\n... (truncated)' : '',
+              '```',
+              '</details>',
+            ].join('\n');
+
+            // ── Delete any stale dry-run comment then post fresh one ──
+            const comments = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner:        context.repo.owner,
+              repo:         context.repo.repo,
+            });
+
+            const stale = comments.data.filter(c => c.body.startsWith(HEADER));
+            await Promise.all(stale.map(c =>
+              github.rest.issues.deleteComment({
+                comment_id: c.id,
+                owner:      context.repo.owner,
+                repo:       context.repo.repo,
+              })
+            ));
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner:        context.repo.owner,
+              repo:         context.repo.repo,
+              body,
+            });
+
+  # ─── Gate 3: Build + Integration Tests + Security Scan ────────────
+  build-test:
+    needs: [lint, release-dry-run]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # upload Trivy SARIF to Security tab
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Use the predicted version from the dry-run so the image tag is
+      # realistic. Falls back to 0.0.0-pr-test when no release is predicted.
+      - name: Resolve image version
+        id: version
+        run: |
+          RAW="${{ needs.release-dry-run.outputs.predicted_version }}"
+          VERSION="${RAW:-0.0.0-pr-test}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Using image version: $VERSION"
+
+      # ── Build main image ─────────────────────────────────────────
+      - name: Build main image (local only — no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          build-args: |
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VCS_REF=${{ github.sha }}
+            APP_VERSION=${{ steps.version.outputs.version }}
+          tags: |
+            helmkit:pr-test
+
+      # ── Build actions image ──────────────────────────────────────
+      - name: Build actions image (local only — no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./actions
+          push: false
+          load: true
+          tags: |
+            helmkit-actions:pr-test
+
+      # ── Gate 4: Integration Tests ────────────────────────────────
+      - name: Run helmkit integration tests
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/tests/integration/test-helmkit.sh:/workspace/tests/integration/test-helmkit.sh:ro \
+            helmkit:pr-test \
+            /bin/bash /workspace/tests/integration/test-helmkit.sh
+
+      - name: Run actions integration tests
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/tests/integration/test-actions.sh:/workspace/tests/integration/test-actions.sh:ro \
+            helmkit-actions:pr-test \
+            /bin/bash /workspace/tests/integration/test-actions.sh
+
+      # ── Gate 5: Security Scan ────────────────────────────────────
+      - name: Run Trivy on main image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: helmkit:pr-test
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Check for critical vulnerabilities in main image
+        run: |
+          if [ -f trivy-results.sarif ]; then
+            CRITICAL_COUNT=$(grep -o '"level":"error"' trivy-results.sarif | wc -l)
+            if [ "$CRITICAL_COUNT" -gt 0 ]; then
+              echo "❌ Found $CRITICAL_COUNT critical vulnerabilities — block merge"
+              exit 1
+            fi
+          fi
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: success() || failure()   # upload even when the check above fails
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Run Trivy on actions image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: helmkit-actions:pr-test
+          format: sarif
+          output: trivy-actions-results.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Check for critical vulnerabilities in actions image
+        run: |
+          if [ -f trivy-actions-results.sarif ]; then
+            CRITICAL_COUNT=$(grep -o '"level":"error"' trivy-actions-results.sarif | wc -l)
+            if [ "$CRITICAL_COUNT" -gt 0 ]; then
+              echo "❌ Found $CRITICAL_COUNT critical vulnerabilities in actions image"
+              exit 1
+            fi
+          fi
+
+      - name: Upload Trivy results for actions to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: success() || failure()
+        with:
+          sarif_file: trivy-actions-results.sarif
+
+      # ── Gate 6: SBOM ─────────────────────────────────────────────
+      # anchore/sbom-action can target a locally loaded image by name.
+      # This validates the SBOM toolchain works before the real push.
+      - name: Generate SBOM for main image
+        uses: anchore/sbom-action@v0
+        with:
+          image: helmkit:pr-test
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Validate SBOM is non-empty
+        run: |
+          if [ ! -s sbom.spdx.json ]; then
+            echo "❌ SBOM file is empty or missing"
+            exit 1
+          fi
+          PACKAGE_COUNT=$(jq '.packages | length' sbom.spdx.json)
+          echo "✅ SBOM contains $PACKAGE_COUNT packages"
+          if [ "$PACKAGE_COUNT" -lt 1 ]; then
+            echo "❌ SBOM has no packages — something went wrong"
+            exit 1
+          fi
+
+      - name: Upload SBOM as PR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Keyed to the PR number so parallel PRs don't overwrite each other
+          name: sbom-pr-${{ github.event.pull_request.number }}
+          path: sbom.spdx.json
+          retention-days: 7
+
+      - name: Generate SBOM for actions image
+        uses: anchore/sbom-action@v0
+        with:
+          image: helmkit-actions:pr-test
+          format: spdx-json
+          output-file: sbom-actions.spdx.json
+
+      - name: Validate actions SBOM is non-empty
+        run: |
+          if [ ! -s sbom-actions.spdx.json ]; then
+            echo "❌ Actions SBOM file is empty or missing"
+            exit 1
+          fi
+          PACKAGE_COUNT=$(jq '.packages | length' sbom-actions.spdx.json)
+          echo "✅ Actions SBOM contains $PACKAGE_COUNT packages"
+          if [ "$PACKAGE_COUNT" -lt 1 ]; then
+            echo "❌ Actions SBOM has no packages"
+            exit 1
+          fi
+
+      - name: Upload actions SBOM as PR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-actions-pr-${{ github.event.pull_request.number }}
+          path: sbom-actions.spdx.json
+          retention-days: 7
