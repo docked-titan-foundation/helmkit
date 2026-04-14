@@ -174,7 +174,7 @@ jobs:
           [ "$PACKAGE_COUNT" -ge 1 ] || { echo "❌ SBOM has no packages"; exit 1; }
 
       - name: Upload SBOM (main) as PR artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-pr-${{ github.event.pull_request.number }}
           path: sbom.spdx.json
@@ -194,7 +194,7 @@ jobs:
           [ "$PACKAGE_COUNT" -ge 1 ] || { echo "❌ Actions SBOM has no packages"; exit 1; }
 
       - name: Upload SBOM (actions) as PR artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-actions-pr-${{ github.event.pull_request.number }}
           path: sbom-actions.spdx.json
