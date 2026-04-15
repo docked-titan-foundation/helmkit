@@ -22,11 +22,10 @@ Helmkit provides a lightweight Alpine-based Docker image with Helm, Helmfile, ku
 
 ## 📋 Version Matrix
 
-| Version | Helm | Helmfile | Kubectl | Helm Diff | Helm Secrets | SOPS | age | Date |
-|-----------------|--------|-------|--------|--------|-------|--------|-------|-----------|
-| 1.2.0 (latest)  | 4.1.1 | 1.4.3 | 1.30.0 | 3.10.0 | 4.7.4 | 3.15.3 | 1.2.1 | 2026-04-14|
-| 1.1.0           | 3.15.0 | 1.4.3 | 1.30.0 | 3.10.0 | 4.6.2 | 3.12.2 | 1.2.1 | 2026-04-14|
-| 1.0.0           | 3.15.0 | 1.4.3 | 1.30.0 | 3.10.0 | 4.6.2 | 3.12.2 | 1.2.1 | 2026-04-12|
+| Version | Helm | Helmfile | Kubectl | Helm Diff | Helm Secrets | SOPS | Date |
+|-----------------|--------|-------|--------|--------|-------|--------|-------|
+| 1.1.0 (latest)          | 3.15.0 | 1.4.3 | 1.30.0 | 3.10.0 | 4.6.2 | 3.12.2 | 2026-04-14|
+| 1.0.0           | 3.15.0 | 1.4.3 | 1.30.0 | 3.10.0 | 4.6.2 | 3.12.2 | 2026-04-12|
 
 See [Changelog](./CHANGELOG.md) for more details.
 
