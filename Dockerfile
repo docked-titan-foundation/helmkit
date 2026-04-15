@@ -3,12 +3,12 @@
 # ============================================================
 FROM alpine:3.23@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659 AS fetcher
 
-ARG HELM_VERSION=3.15.0
+ARG HELM_VERSION=4.1.1
 ARG HELMFILE_VERSION=1.4.3
 ARG KUBECTL_VERSION=1.30.0
 ARG HELM_DIFF_VERSION=3.10.0
 ARG SOPS_VERSION=3.12.2
-ARG HELM_SHA256="a74747ac40777b86d3ff6f1be201504bba65ca46cd68b5fe25d3c394d0dcf745"
+ARG HELM_SHA256="5d4c7623283e6dfb1971957f4b755468ab64917066a8567dd50464af298f4031"
 ARG KUBECTL_SHA256="7c3807c0f5c1b30110a2ff1e55da1d112a6d0096201f1beb81b269f582b5d1c5"
 ARG SOPS_SHA256="14e2e1ba3bef31e74b70cf0b674f6443c80f6c5f3df15d05ffc57c34851b4998"
 
@@ -19,9 +19,9 @@ ENV HELM_DIFF_VERSION=${HELM_DIFF_VERSION}
 ENV SOPS_VERSION=${SOPS_VERSION}
 
 RUN apk add --no-cache \
-    curl=8.17.0-r1 \
-    ca-certificates=20251003-r0 \
-    gnupg=2.4.9-r0
+    curl \
+    ca-certificates \
+    gnupg
 
 WORKDIR /downloads
 
@@ -78,21 +78,25 @@ FROM fetcher AS plugin-installer
 
 COPY --from=fetcher /usr/local/bin/helm /usr/local/bin/helm
 
-ARG HELM_DIFF_VERSION=3.10.0
-ARG HELM_SECRETS_VERSION=4.6.2
+RUN mkdir -p ~/.config/helm/keys && \
+    curl -fsSL https://github.com/jkroepke.gpg -o ~/.config/helm/keys/jkroepke.gpg.raw && \
+    gpg --dearmor < ~/.config/helm/keys/jkroepke.gpg.raw > ~/.config/helm/keys/jkroepke.gpg && \
+    chmod 600 ~/.config/helm/keys/jkroepke.gpg && \
+    rm ~/.config/helm/keys/jkroepke.gpg.raw
+
+ARG HELM_DIFF_VERSION=3.15.3
+ARG HELM_SECRETS_VERSION=4.7.4
 
 # Runtime-only dependencies (minimal)
 RUN apk add --no-cache \
-    git=2.52.0-r0 && \
+    git && \
     # Remove package cache
     rm -rf /var/cache/apk/*
 
-RUN helm plugin install \
-    https://github.com/databus23/helm-diff \
-    --version ${HELM_DIFF_VERSION} && \
-    helm plugin install \
-    https://github.com/jkroepke/helm-secrets \
-    --version ${HELM_SECRETS_VERSION}
+RUN helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION} --verify=false && \
+    helm plugin install https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-${HELM_SECRETS_VERSION}.tgz --keyring ~/.config/helm/keys/jkroepke.gpg && \
+    helm plugin install https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-getter-${HELM_SECRETS_VERSION}.tgz --keyring ~/.config/helm/keys/jkroepke.gpg && \
+    helm plugin install https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-post-renderer-${HELM_SECRETS_VERSION}.tgz --keyring ~/.config/helm/keys/jkroepke.gpg
 
 # ============================================================
 # Stage 3: Final Runtime Image
@@ -115,12 +119,12 @@ LABEL org.opencontainers.image.title="helmkit" \
 
 # Runtime-only dependencies (minimal)
 RUN apk add --no-cache \
-    ca-certificates=20251003-r0 \
-    git=2.52.0-r0 \
-    openssh-client=10.2_p1-r0 \
-    gnupg=2.4.9-r0 \
-    bash=5.3.3-r1 \
-    age=1.2.1-r14 && \
+    ca-certificates \
+    git \
+    openssh-client \
+    gnupg \
+    age \
+    bash && \
     # Remove package cache
     rm -rf /var/cache/apk/*
 
