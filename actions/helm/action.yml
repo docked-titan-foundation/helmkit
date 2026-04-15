@@ -19,7 +19,7 @@ outputs:
 
 runs:
   using: "docker"
-  image: "docker://ghcr.io/docked-titan-foundation/helmkit/actions:v1.2.0
+  image: "docker://ghcr.io/docked-titan-foundation/helmkit/actions:v1.3.0
   cmd: ["helm", "${{ inputs.args }}"]
 
 credentials:

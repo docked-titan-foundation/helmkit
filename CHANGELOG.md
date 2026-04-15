@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/docked-titan-foundation/helmkit/compare/v1.2.0...v1.3.0) (2026-04-15)
+
+
+### Features
+
+* **helmkit:** update tool versions and SHA256 checksums ([bae15a9](https://github.com/docked-titan-foundation/helmkit/commit/bae15a9c08a06e271d636c53e6ec5bb902de746f))
+
 # [1.2.0](https://github.com/docked-titan-foundation/helmkit/compare/v1.1.0...v1.2.0) (2026-04-15)
 
 
