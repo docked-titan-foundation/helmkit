@@ -27,7 +27,7 @@
     [
       "@semantic-release/git",
       {
-        "assets": ["CHANGELOG.md", "package.json", "README.md", "actions/helm/action.yml", "actions/helmfile/action.yml"],
+        "assets": ["CHANGELOG.md", "package.json", "README.md", "action.yml"],
         "message": "chore(release): ${nextRelease.version} \n\n${nextRelease.notes}"
       }
     ]
