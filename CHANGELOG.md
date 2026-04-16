@@ -1,3 +1,15 @@
+# [1.4.0](https://github.com/docked-titan-foundation/helmkit/compare/v1.3.0...v1.4.0) (2026-04-16)
+
+
+### Bug Fixes
+
+* **semantic-release:** Add actions correctly to the release and update the versions correctly with the script ([f38303c](https://github.com/docked-titan-foundation/helmkit/commit/f38303cb24d941fc20ca880bba8e33f68016f550))
+
+
+### Features
+
+* **actions:** Add general action in the root directory and delete the old actions folder to clean up the project. ([cf12dc4](https://github.com/docked-titan-foundation/helmkit/commit/cf12dc466ab3996dd182e4831dd33dc3cfffcb6b))
+
 # [1.3.0](https://github.com/docked-titan-foundation/helmkit/compare/v1.2.0...v1.3.0) (2026-04-15)
 
 
