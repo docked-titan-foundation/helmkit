@@ -91,9 +91,8 @@ jobs:
           GIT_COMMITTER_NAME: s-release[bot]
           GIT_COMMITTER_EMAIL: ${{ secrets.TITAN_RELEASER_EMAIL }}
         run: |
-          OUTPUT=$(npx semantic-release 2>&1)
-          echo "$OUTPUT"
-          VERSION=$(echo "$OUTPUT" | grep -oP 'Published release \K[0-9]+\.[0-9]+\.[0-9]+' || echo "")
+          npx semantic-release 2>&1 | tee /tmp/semantic-output.txt
+          VERSION=$(grep -oP 'Published release \K[0-9]+\.[0-9]+\.[0-9]+' /tmp/semantic-output.txt || echo "")
           if [ -n "$VERSION" ]; then
             echo "new_release_published=true" >> $GITHUB_OUTPUT
             echo "new_release_version=$VERSION" >> $GITHUB_OUTPUT
@@ -177,6 +176,8 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/tests/integration/test-helmkit.sh:/workspace/tests/integration/test-helmkit.sh:ro \
+            -v ${{ github.workspace }}/tests:/workspace/tests:ro \
+            -w /workspace \
             ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }} \
             /bin/bash /workspace/tests/integration/test-helmkit.sh
 
@@ -184,6 +185,8 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/tests/integration/test-actions.sh:/workspace/tests/integration/test-actions.sh:ro \
+            -v ${{ github.workspace }}/tests:/workspace/tests:ro \
+            -w /workspace \
             ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }} \
             /bin/bash /workspace/tests/integration/test-actions.sh
 
@@ -279,6 +282,13 @@ jobs:
       artifact-metadata: write
       packages: write
     steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Attest main image
         uses: actions/attest-build-provenance@v4
         with:

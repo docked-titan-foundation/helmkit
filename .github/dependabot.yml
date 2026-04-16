@@ -6,22 +6,7 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 10
     commit-message:
-      prefix: "chore(dependencies)"
-    reviewers:
-      - "albertoig"
-    assignees:
-      - "albertoig"
-    labels:
-      - "dependencies"
-      - "docker"
-
-  - package-ecosystem: "docker"
-    directory: "/actions"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    commit-message:
-      prefix: "chore(dependencies)"
+      prefix: "fix(dependencies)"
     reviewers:
       - "albertoig"
     assignees:
