@@ -75,8 +75,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Helm Version
-        uses: ./actions/helm
+        uses: ./
         with:
+          tool: helm
           args: "version --short"
 ```
 
@@ -86,10 +87,9 @@ HelmKit provides reusable GitHub Actions for Helm and Helmfile operations.
 
 | Action | Description |
 |--------|-------------|
-| [actions/helm](./actions/helm) | Run Helm commands |
-| [actions/helmfile](./actions/helmfile) | Run Helmfile commands |
+| [HelmKit Action](./action.yml) | Run Helm, Helmfile, Kubectl, or SOPS |
 
-See [actions/README.md](./actions/README.md) for detailed usage.
+See the [action documentation](./action.yml) for detailed usage.
 
 ---
 
@@ -220,6 +220,7 @@ This roadmap tracks the progress of the Helmkit Docker Image.
   - [x] Helmkit
   - [x] Helmkit Actions
 - [x] Funding
+- [x] Version Matrix Automated
 
 ## 🚧 In Progress
 - [ ] Image maintenance
@@ -227,7 +228,6 @@ This roadmap tracks the progress of the Helmkit Docker Image.
 ## 📋 Planned
 - [ ] Pre release Versioning
 - [ ] Maintenance Releases
-- [ ] Version Matrix Automated
 - [ ] Use Renovate Bot instead Dependabot, which supports Dockerfile ARG patterns.
 - [ ] Multi-Architecture Support
 - [ ] More Usage Examples

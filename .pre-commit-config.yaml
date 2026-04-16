@@ -41,3 +41,10 @@ repos:
         language: system
         stages: [pre-commit]
         always_run: true
+      - id: release-config-validate
+        name: Validate semantic release configuration
+        entry: ./scripts/validate-release-config.sh
+        language: system
+        stages: [pre-commit]
+        files: ^(\.releaserc|scripts/update-versions\.sh|README\.md|action\.yml|scripts/validate-release-config\.sh)$
+        pass_filenames: false
