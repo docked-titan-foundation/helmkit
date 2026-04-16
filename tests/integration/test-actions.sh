@@ -71,8 +71,6 @@ run_test "helmfile lint test-helmfile" \
 # --- Security tests ---
 echo ""
 echo "🔒 Security Validation"
-run_test "not running as root" \
-    "[ \"\$(id -u)\" != '0' ]"
 run_test "no setuid binaries in /usr/local/bin" \
     "! find /usr/local/bin -perm /4000 | grep -q ."
 

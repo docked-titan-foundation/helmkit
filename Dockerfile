@@ -1,7 +1,7 @@
 # ============================================================
 # Stage 1: Binary Fetcher / Builder
 # ============================================================
-FROM alpine:3.23@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659 AS fetcher
+FROM alpine:3.23@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11 AS fetcher
 
 ARG HELM_VERSION=4.1.4
 ARG HELMFILE_VERSION=1.4.4
@@ -99,7 +99,7 @@ RUN helm plugin install https://github.com/databus23/helm-diff --version ${HELM_
 # ============================================================
 # Stage 3: Final Runtime Image
 # ============================================================
-FROM alpine:3.23@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659 AS runtime
+FROM alpine:3.23@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11 AS runtime
 
 ARG APP_VERSION="1.0.0"
 ARG BUILD_DATE

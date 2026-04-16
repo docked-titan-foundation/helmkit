@@ -1,3 +1,39 @@
+# [1.4.0](https://github.com/docked-titan-foundation/helmkit/compare/v1.3.0...v1.4.0) (2026-04-19)
+
+
+### Bug Fixes
+
+* **ci:** add SLSA build provenance attestation for container images ([cd6f9bb](https://github.com/docked-titan-foundation/helmkit/commit/cd6f9bb16b4fd7ec39f04e3ed3f6c90acf0bc5d0))
+* **dependencies:** bump alpine from `2510918` to `5b10f43` ([c1525fe](https://github.com/docked-titan-foundation/helmkit/commit/c1525fe3afb6ccbad4e63b5bb000466de386d614))
+* **semantic-release:** Add actions correctly to the release and update the versions correctly with the script ([c47aa9a](https://github.com/docked-titan-foundation/helmkit/commit/c47aa9a181996bccc0d25b654920e8cd265e5d4f))
+
+
+### Features
+
+* **actions:** Add general action in the root directory and delete the old actions folder to clean up the project. ([cf12dc4](https://github.com/docked-titan-foundation/helmkit/commit/cf12dc466ab3996dd182e4831dd33dc3cfffcb6b))
+* create attestation automation for docker images ([ef10fe3](https://github.com/docked-titan-foundation/helmkit/commit/ef10fe39abd13fae579180b47a2555d894414e9e))
+
+## [1.5.9](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.8...v1.5.9) (2026-04-18)
+
+
+### Bug Fixes
+
+* **pipeline:** add login step ([aecda6f](https://github.com/docked-titan-foundation/helmkit/commit/aecda6fb52b0e7d434baa9bf1784b9cedffae6ae))
+
+## [1.5.8](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.7...v1.5.8) (2026-04-18)
+
+
+### Bug Fixes
+
+* **pipeline:** mount test data volumes for integration tests ([a0e3e97](https://github.com/docked-titan-foundation/helmkit/commit/a0e3e9742b1340d3c7be7a9cb36fde770ab4135e))
+
+## [1.5.7](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.6...v1.5.7) (2026-04-18)
+
+
+### Bug Fixes
+
+* **dependabot:** remove non existent actions dependabot folder ([a1bd40c](https://github.com/docked-titan-foundation/helmkit/commit/a1bd40c3485dc789b60eedffbd9f6ca44cb8eff6))
+
 ## [1.5.6](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.5...v1.5.6) (2026-04-18)
 
 
