@@ -1,0 +1,34 @@
+name: "HelmKit Root"
+description: "Run any HelmKit tool (helm, helmfile, kubectl, sops)"
+author: "HelmKit"
+branding:
+  icon: "box"
+  color: "blue"
+
+inputs:
+  tool:
+    description: "Tool to run (helm, helmfile, kubectl, sops)"
+    required: true
+  args:
+    description: "Arguments passed to the tool"
+    required: false
+    default: ""
+  registry-username:
+    description: "Username for image registry"
+    required: false
+  registry-password:
+    description: "Password/token for image registry"
+    required: false
+
+outputs:
+  exit-code:
+    description: "Exit code from command"
+  output:
+    description: "Output from command"
+
+runs:
+  using: "docker"
+  image: "docker://ghcr.io/docked-titan-foundation/helmkit/actions:v1.3.0"
+  args:
+    - ${{ inputs.tool }}
+    - ${{ inputs.args }}
