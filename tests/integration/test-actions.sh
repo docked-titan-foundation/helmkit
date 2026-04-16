@@ -15,19 +15,19 @@ run_test() {
     if eval "$cmd" > /tmp/test_output 2>&1; then
         if [ "$expected" -eq 0 ]; then
             echo "✅ PASS"
-            ((PASS++))
+            PASS=$((PASS + 1))
         else
             echo "❌ FAIL (expected failure but passed)"
-            ((FAIL++))
+            FAIL=$((FAIL + 1))
         fi
     else
         if [ "$expected" -ne 0 ]; then
             echo "✅ PASS (expected failure)"
-            ((PASS++))
+            PASS=$((PASS + 1))
         else
             echo "❌ FAIL"
             cat /tmp/test_output
-            ((FAIL++))
+            FAIL=$((FAIL + 1))
         fi
     fi
 }
@@ -38,12 +38,12 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 echo ""
 echo "📦 Building Actions Docker Image"
-if docker build -t helmkit-actions actions/; then
+if docker build -t helmkit-actions -f Dockerfile.action .; then
     echo "✅ PASS - Built helmkit-actions image"
-    ((PASS++))
+    PASS=$((PASS + 1))
 else
     echo "❌ FAIL - Failed to build helmkit-actions image"
-    ((FAIL++))
+    FAIL=$((FAIL + 1))
     exit 1
 fi
 
@@ -51,33 +51,33 @@ fi
 echo ""
 echo "🔢 Helm Version Validation"
 run_test "helm version output" \
-    "docker run --rm helmkit-actions helm version --short | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+'"
+    "docker run --rm --entrypoint helm helmkit-actions version --short | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+'"
 
 # --- Helmfile version test ---
 echo ""
 echo "🔢 Helmfile Version Validation"
 run_test "helmfile version output" \
-    "docker run --rm helmkit-actions helmfile --version | grep -E '[0-9]+\.[0-9]+\.[0-9]+'"
+    "docker run --rm --entrypoint helmfile helmkit-actions --version | grep -E '[0-9]+\.[0-9]+\.[0-9]+'"
 
 # --- Helm lint test ---
 echo ""
 echo "📋 Helm Lint Tests"
 run_test "helm lint test-chart" \
-    "docker run --rm -v $PWD:/workspace helmkit-actions helm lint tests/test-chart/"
+    "docker run --rm -v $PWD:/workspace --entrypoint helm helmkit-actions lint tests/test-chart/"
 run_test "helm template test-chart" \
-    "docker run --rm -v $PWD:/workspace helmkit-actions helm template test-release tests/test-chart/ | grep -q 'kind: ConfigMap'"
+    "docker run --rm -v $PWD:/workspace --entrypoint helm helmkit-actions template test-release tests/test-chart/ | grep -q 'kind: ConfigMap'"
 
 # --- Helmfile lint test ---
 echo ""
 echo "📋 Helmfile Lint Tests"
 run_test "helmfile lint test-helmfile" \
-    "docker run --rm -v $PWD:/workspace helmkit-actions helmfile -f tests/helmfile.yaml lint"
+    "docker run --rm -v $PWD:/workspace --entrypoint helmfile helmkit-actions -f tests/helmfile.yaml lint"
 
 # --- Security tests (running as root) ---
 echo ""
 echo "🔒 Security Validation"
 run_test "running as root (uid 0)" \
-    "docker run --rm helmkit-actions id -u | grep -q '^0$'"
+    "docker run --rm --entrypoint id helmkit-actions -u | grep -q '^0$'"
 
 # --- Summary ---
 echo ""

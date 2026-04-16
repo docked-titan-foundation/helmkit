@@ -1,0 +1,16 @@
+FROM ghcr.io/docked-titan-foundation/helmkit:latest
+
+LABEL maintainer="HelmKit"
+LABEL description="HelmKit Actions"
+
+COPY scripts/action/entrypoint.sh /entrypoint.sh
+
+# hadolint ignore=DL3002 - actions run as root intentionally
+USER root
+
+RUN chmod +x /entrypoint.sh
+
+WORKDIR /workspace
+
+ENTRYPOINT ["/entrypoint.sh"]
+

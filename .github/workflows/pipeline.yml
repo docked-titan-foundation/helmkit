@@ -20,7 +20,7 @@ jobs:
       - name: Lint actions Dockerfile
         uses: hadolint/hadolint-action@v3.3.0
         with:
-          dockerfile: actions/Dockerfile
+          dockerfile: Dockerfile.action
 
   # ─── GATE 2: Versioning (only on main) ────────────────────────────
   release:
@@ -139,7 +139,8 @@ jobs:
       - name: Build actions image
         uses: docker/build-push-action@v7
         with:
-          context: ./actions
+          context: .
+          dockerfile: Dockerfile.action
           push: false
           load: true
           tags: |
@@ -267,7 +268,8 @@ jobs:
       - name: Push actions image
         uses: docker/build-push-action@v7
         with:
-          context: ./actions
+          context: .
+          dockerfile: Dockerfile.action
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}

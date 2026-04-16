@@ -20,7 +20,7 @@ jobs:
       - name: Lint actions Dockerfile
         uses: hadolint/hadolint-action@v3.3.0
         with:
-          dockerfile: actions/Dockerfile
+          dockerfile: Dockerfile.action
 
   # ─── Gate 2: Semantic Release Config Check ─────────────────────────
   # Goals:
@@ -90,7 +90,8 @@ jobs:
       - name: Build actions image (local only — no push)
         uses: docker/build-push-action@v7
         with:
-          context: ./actions
+          context: .
+          dockerfile: Dockerfile.action
           push: false
           load: true
           tags: helmkit-actions:pr-test
