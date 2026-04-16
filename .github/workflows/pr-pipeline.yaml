@@ -22,6 +22,17 @@ jobs:
         with:
           dockerfile: Dockerfile.action
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate semantic release configuration
+        run: ./scripts/validate-release-config.sh
+
   # ─── Gate 2: Semantic Release Config Check ─────────────────────────
   # Goals:
   #   1. Validate .releaserc is parseable and the plugin chain loads

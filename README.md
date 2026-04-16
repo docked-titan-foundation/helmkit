@@ -24,7 +24,8 @@ Helmkit provides a lightweight Alpine-based Docker image with Helm, Helmfile, ku
 
 | Version | Helm | Helmfile | Kubectl | Helm Diff | Helm Secrets | SOPS | Date |
 |-----------------|--------|-------|--------|--------|-------|--------|-------|
-| 1.3.0 (latest) | 4.1.4 | 1.4.4 | 1.33.9 | 3.15.5 | 4.7.4 | 3.12.2 | 2026-04-15|
+| 1.4.0 (latest) | 4.1.4 | 1.4.4 | 1.33.9 | 3.15.5 | 4.7.4 | 3.12.2 | 2026-04-16|
+| 1.3.0 | 4.1.4 | 1.4.4 | 1.33.9 | 3.15.5 | 4.7.4 | 3.12.2 | 2026-04-15|
 | 1.2.0 | 4.1.1 | 1.4.3 | 1.30.0 | 3.10.0 | 4.7.4 | 3.12.2 | 2026-04-15|
 | 1.1.0          | 3.15.0 | 1.4.3 | 1.30.0 | 3.10.0 | 4.6.2 | 3.12.2 | 2026-04-14|
 | 1.0.0           | 3.15.0 | 1.4.3 | 1.30.0 | 3.10.0 | 4.6.2 | 3.12.2 | 2026-04-12|
@@ -75,8 +76,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Helm Version
-        uses: ./actions/helm
+        uses: ./
         with:
+          tool: helm
           args: "version --short"
 ```
 
@@ -86,10 +88,9 @@ HelmKit provides reusable GitHub Actions for Helm and Helmfile operations.
 
 | Action | Description |
 |--------|-------------|
-| [actions/helm](./actions/helm) | Run Helm commands |
-| [actions/helmfile](./actions/helmfile) | Run Helmfile commands |
+| [HelmKit Action](./action.yml) | Run Helm, Helmfile, Kubectl, or SOPS |
 
-See [actions/README.md](./actions/README.md) for detailed usage.
+See the [action documentation](./action.yml) for detailed usage.
 
 ---
 
@@ -220,6 +221,7 @@ This roadmap tracks the progress of the Helmkit Docker Image.
   - [x] Helmkit
   - [x] Helmkit Actions
 - [x] Funding
+- [x] Version Matrix Automated
 
 ## 🚧 In Progress
 - [ ] Image maintenance
@@ -227,7 +229,6 @@ This roadmap tracks the progress of the Helmkit Docker Image.
 ## 📋 Planned
 - [ ] Pre release Versioning
 - [ ] Maintenance Releases
-- [ ] Version Matrix Automated
 - [ ] Use Renovate Bot instead Dependabot, which supports Dockerfile ARG patterns.
 - [ ] Multi-Architecture Support
 - [ ] More Usage Examples
