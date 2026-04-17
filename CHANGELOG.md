@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/docked-titan-foundation/helmkit/compare/v1.4.0...v1.5.0) (2026-04-17)
+
+
+### Features
+
+* create attestation automation for docker images ([56776da](https://github.com/docked-titan-foundation/helmkit/commit/56776dadd331b6fbf6dae472b5ef2e6716aa22ce))
+
 # [1.4.0](https://github.com/docked-titan-foundation/helmkit/compare/v1.3.0...v1.4.0) (2026-04-16)
 
 
