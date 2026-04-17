@@ -279,7 +279,28 @@ jobs:
             org.opencontainers.image.version=${{ needs.release.outputs.new_release_version }}
             org.opencontainers.image.title=${{ github.event.repository.name }}-actions
 
-  # ─── GATE 8: Sign ─────────────────────────────────────────────────
+   # ─── GATE 8: Attest ──────────────────────────────────────────────────
+  attest:
+    needs: [release, build]
+    runs-on: ubuntu-latest
+    if: needs.build.result == 'success'
+    permissions:
+      contents: write
+      attestations: write
+      id-token: write
+      packages: write
+    steps:
+      - name: Attest main image
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject: ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
+
+      - name: Attest actions image
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject: ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+
+   # ─── GATE 9: Sign ─────────────────────────────────────────────────
   sign:
     needs: [release, build]
     runs-on: ubuntu-latest
