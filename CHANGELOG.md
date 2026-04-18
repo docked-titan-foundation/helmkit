@@ -1,3 +1,10 @@
+## [1.5.8](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.7...v1.5.8) (2026-04-18)
+
+
+### Bug Fixes
+
+* **pipeline:** mount test data volumes for integration tests ([a0e3e97](https://github.com/docked-titan-foundation/helmkit/commit/a0e3e9742b1340d3c7be7a9cb36fde770ab4135e))
+
 ## [1.5.7](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.6...v1.5.7) (2026-04-18)
 
 
