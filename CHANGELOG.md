@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.2...v1.5.3) (2026-04-18)
+
+
+### Bug Fixes
+
+* **ci:** remove redundant cosign sign commands in SBOM attestation steps ([9e5fc49](https://github.com/docked-titan-foundation/helmkit/commit/9e5fc49e6cf0da2d8ebe4b0210ef4fb226d4e02b))
+
 ## [1.5.2](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.1...v1.5.2) (2026-04-18)
 
 
