@@ -1,3 +1,10 @@
+## [1.5.7](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.6...v1.5.7) (2026-04-18)
+
+
+### Bug Fixes
+
+* **dependabot:** remove non existent actions dependabot folder ([a1bd40c](https://github.com/docked-titan-foundation/helmkit/commit/a1bd40c3485dc789b60eedffbd9f6ca44cb8eff6))
+
 ## [1.5.6](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.5...v1.5.6) (2026-04-18)
 
 
