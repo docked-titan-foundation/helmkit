@@ -177,6 +177,8 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/tests/integration/test-helmkit.sh:/workspace/tests/integration/test-helmkit.sh:ro \
+            -v ${{ github.workspace }}/tests:/workspace/tests:ro \
+            -w /workspace \
             ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }} \
             /bin/bash /workspace/tests/integration/test-helmkit.sh
 
@@ -184,6 +186,8 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/tests/integration/test-actions.sh:/workspace/tests/integration/test-actions.sh:ro \
+            -v ${{ github.workspace }}/tests:/workspace/tests:ro \
+            -w /workspace \
             ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }} \
             /bin/bash /workspace/tests/integration/test-actions.sh
 

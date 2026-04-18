@@ -119,6 +119,8 @@ jobs:
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/tests/integration/test-actions.sh:/workspace/tests/integration/test-actions.sh:ro \
+            -v ${{ github.workspace }}/tests:/workspace/tests:ro \
+            -w /workspace \
             helmkit-actions:pr-test \
             /bin/bash /workspace/tests/integration/test-actions.sh
 
