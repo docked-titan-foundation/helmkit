@@ -133,7 +133,6 @@ jobs:
             APP_VERSION=${{ needs.release.outputs.new_release_version }}
           tags: |
             ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
-            ghcr.io/${{ github.repository }}:latest
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.version=${{ needs.release.outputs.new_release_version }}
@@ -149,7 +148,6 @@ jobs:
           outputs: type=registry,push-by-digest=true,name-canonical=true
           tags: |
             ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
-            ghcr.io/${{ github.repository }}/actions:latest
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.version=${{ needs.release.outputs.new_release_version }}
