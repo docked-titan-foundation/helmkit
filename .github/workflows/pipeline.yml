@@ -283,6 +283,13 @@ jobs:
       artifact-metadata: write
       packages: write
     steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Attest main image
         uses: actions/attest-build-provenance@v4
         with:
