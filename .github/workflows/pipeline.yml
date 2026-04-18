@@ -97,11 +97,14 @@ jobs:
             echo "new_release_published=false" >> $GITHUB_OUTPUT
           fi
 
-  # ─── GATE 3: Build (local only, do NOT push yet) ──────────────────
+   # ─── GATE 3: Build (single build, capture digest) ───────────────────
   build:
     needs: release
     runs-on: ubuntu-latest
     if: needs.release.result == 'success' && needs.release.outputs.new_release_published == 'true'
+    outputs:
+      main_image_digest: ${{ steps.build-main.outputs.digest }}
+      actions_image_digest: ${{ steps.build-actions.outputs.digest }}
     permissions:
       contents: write
       packages: write
@@ -117,12 +120,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Build image (load locally, no push)
+      - name: Build and push main image (by digest)
+        id: build-main
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: false
-          load: true
+          push: true
+          outputs: type=registry,push-by-digest=true,name-canonical=true
           build-args: |
             BUILD_DATE=${{ github.event.repository.updated_at }}
             VCS_REF=${{ github.sha }}
@@ -135,17 +139,29 @@ jobs:
             org.opencontainers.image.version=${{ needs.release.outputs.new_release_version }}
             org.opencontainers.image.title=${{ github.event.repository.name }}
 
-      # ─── GATE 4: Integration Tests ────────────────────────────────
-      - name: Build actions image
+      - name: Build and push actions image (by digest)
+        id: build-actions
         uses: docker/build-push-action@v7
         with:
           context: .
-          dockerfile: Dockerfile.action
-          push: false
-          load: true
+          file: Dockerfile.action
+          push: true
+          outputs: type=registry,push-by-digest=true,name-canonical=true
           tags: |
             ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+            ghcr.io/${{ github.repository }}/actions:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.version=${{ needs.release.outputs.new_release_version }}
+            org.opencontainers.image.title=${{ github.event.repository.name }}-actions
 
+      - name: Pull main image for local testing
+        run: docker pull ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
+
+      - name: Pull actions image for local testing
+        run: docker pull ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+
+      # ─── GATE 4: Integration Tests ────────────────────────────────
       - name: Run helmkit integration tests
         run: |
           docker run --rm \
@@ -164,7 +180,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ghcr.io/${{ github.repository }}:latest
+          image-ref: ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
@@ -217,7 +233,7 @@ jobs:
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
         with:
-          image: ghcr.io/${{ github.repository }}:latest
+          image: ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
           format: spdx-json
           output-file: sbom.spdx.json
 
@@ -240,45 +256,6 @@ jobs:
           name: sbom-actions-${{ needs.release.outputs.new_release_version }}
           path: sbom-actions.spdx.json
 
-      # ─── GATE 7: Push (only after everything passed) ────────────────
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push verified image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          build-args: |
-            BUILD_DATE=${{ github.event.repository.updated_at }}
-            VCS_REF=${{ github.sha }}
-            APP_VERSION=${{ needs.release.outputs.new_release_version }}
-          tags: |
-            ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
-            ghcr.io/${{ github.repository }}:latest
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.version=${{ needs.release.outputs.new_release_version }}
-            org.opencontainers.image.title=${{ github.event.repository.name }}
-
-      - name: Push actions image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          dockerfile: Dockerfile.action
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
-            ghcr.io/${{ github.repository }}/actions:latest
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.version=${{ needs.release.outputs.new_release_version }}
-            org.opencontainers.image.title=${{ github.event.repository.name }}-actions
-
    # ─── GATE 8: Attest ──────────────────────────────────────────────────
   attest:
     needs: [release, build]
@@ -288,71 +265,80 @@ jobs:
       contents: write
       attestations: write
       id-token: write
+      artifact-metadata: write
       packages: write
     steps:
       - name: Attest main image
         uses: actions/attest-build-provenance@v4
         with:
-          subject: ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ needs.build.outputs.main_image_digest }}
+          push-to-registry: true
+          create-storage-record: true
+
 
       - name: Attest actions image
         uses: actions/attest-build-provenance@v4
         with:
-          subject: ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+          subject-name: ghcr.io/${{ github.repository }}/actions
+          subject-digest: ${{ needs.build.outputs.actions_image_digest }}
+          push-to-registry: true
+          create-storage-record: true
+
 
    # ─── GATE 9: Sign ─────────────────────────────────────────────────
-  sign:
-    needs: [release, build]
-    runs-on: ubuntu-latest
-    if: needs.build.result == 'success'
-    permissions:
-      id-token: write
-      packages: write
-    steps:
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
+   sign:
+     needs: [release, build, attest]
+     runs-on: ubuntu-latest
+     if: needs.build.result == 'success' && needs.attest.result == 'success'
+     permissions:
+       id-token: write
+       packages: write
+     steps:
+       - name: Install Cosign
+         uses: sigstore/cosign-installer@v3
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+       - name: Login to GitHub Container Registry
+         uses: docker/login-action@v4
+         with:
+           registry: ghcr.io
+           username: ${{ github.repository_owner }}
+           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sign image
-        run: |
-          cosign sign --yes \
-            ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
+       - name: Sign main image by digest
+         run: |
+           cosign sign --yes \
+             ghcr.io/${{ github.repository }}@${{ needs.build.outputs.main_image_digest }}
 
-      - name: Download SBOM artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: sbom-${{ needs.release.outputs.new_release_version }}
+       - name: Download SBOM artifact
+         uses: actions/download-artifact@v8
+         with:
+           name: sbom-${{ needs.release.outputs.new_release_version }}
 
-      - name: Attach and sign SBOM
-        run: |
-          cosign attach sbom \
-            --sbom sbom.spdx.json \
-            ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
+       - name: Attach and sign SBOM
+         run: |
+           cosign attach sbom \
+             --sbom sbom.spdx.json \
+             ghcr.io/${{ github.repository }}@${{ needs.build.outputs.main_image_digest }}
 
-          cosign sign --yes --attachment sbom \
-            ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
+           cosign sign --yes --attachment sbom \
+             ghcr.io/${{ github.repository }}@${{ needs.build.outputs.main_image_digest }}
 
-      - name: Sign actions image
-        run: |
-          cosign sign --yes \
-            ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+       - name: Sign actions image by digest
+         run: |
+           cosign sign --yes \
+             ghcr.io/${{ github.repository }}/actions@${{ needs.build.outputs.actions_image_digest }}
 
-      - name: Download actions SBOM artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: sbom-actions-${{ needs.release.outputs.new_release_version }}
+       - name: Download actions SBOM artifact
+         uses: actions/download-artifact@v8
+         with:
+           name: sbom-actions-${{ needs.release.outputs.new_release_version }}
 
-      - name: Attach and sign actions SBOM
-        run: |
-          cosign attach sbom \
-            --sbom sbom-actions.spdx.json \
-            ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+       - name: Attach and sign actions SBOM
+         run: |
+           cosign attach sbom \
+             --sbom sbom-actions.spdx.json \
+             ghcr.io/${{ github.repository }}/actions@${{ needs.build.outputs.actions_image_digest }}
 
-          cosign sign --yes --attachment sbom \
-            ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+           cosign sign --yes --attachment sbom \
+             ghcr.io/${{ github.repository }}/actions@${{ needs.build.outputs.actions_image_digest }}

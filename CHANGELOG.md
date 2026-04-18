@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.0...v1.5.1) (2026-04-18)
+
+
+### Bug Fixes
+
+* **ci:** add SLSA build provenance attestation for container images ([3bf6878](https://github.com/docked-titan-foundation/helmkit/commit/3bf6878ec9b93f85211e86d6a84dfeb08ed6e977))
+
 # [1.5.0](https://github.com/docked-titan-foundation/helmkit/compare/v1.4.0...v1.5.0) (2026-04-17)
 
 
