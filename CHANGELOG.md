@@ -1,3 +1,10 @@
+## [1.5.9](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.8...v1.5.9) (2026-04-18)
+
+
+### Bug Fixes
+
+* **pipeline:** add login step ([aecda6f](https://github.com/docked-titan-foundation/helmkit/commit/aecda6fb52b0e7d434baa9bf1784b9cedffae6ae))
+
 ## [1.5.8](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.7...v1.5.8) (2026-04-18)
 
 
