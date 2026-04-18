@@ -143,7 +143,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          dockerfile: Dockerfile.action
+          file: Dockerfile.action
           push: false
           load: true
           tags: |
@@ -274,7 +274,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          dockerfile: Dockerfile.action
+          file: Dockerfile.action
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
