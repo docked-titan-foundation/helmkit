@@ -1,3 +1,10 @@
+## [1.5.4](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.3...v1.5.4) (2026-04-18)
+
+
+### Bug Fixes
+
+* **ci:** add GHCR login step to build job before pushing images ([17298a2](https://github.com/docked-titan-foundation/helmkit/commit/17298a2fb3841ae8d96d873df0cc0c02f31b9bcb))
+
 ## [1.5.3](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.2...v1.5.3) (2026-04-18)
 
 
