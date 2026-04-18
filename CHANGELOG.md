@@ -1,3 +1,10 @@
+## [1.5.5](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.4...v1.5.5) (2026-04-18)
+
+
+### Bug Fixes
+
+* **actions:** set default GITHUB_OUTPUT path when environment variable is empty ([84e257a](https://github.com/docked-titan-foundation/helmkit/commit/84e257a7c4a3b072e5698fd2bbb3eb834992c072))
+
 ## [1.5.4](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.3...v1.5.4) (2026-04-18)
 
 
