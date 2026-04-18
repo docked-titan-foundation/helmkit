@@ -36,48 +36,45 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  Helmkit Actions Integration Test Suite"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+# --- Binary presence tests ---
 echo ""
-echo "📦 Building Actions Docker Image"
-if docker build -t helmkit-actions -f Dockerfile.action .; then
-    echo "✅ PASS - Built helmkit-actions image"
-    PASS=$((PASS + 1))
-else
-    echo "❌ FAIL - Failed to build helmkit-actions image"
-    FAIL=$((FAIL + 1))
-    exit 1
-fi
+echo "📦 Binary Verification"
+run_test "helm binary exists"     "command -v helm"
+run_test "helmfile binary exists" "command -v helmfile"
 
 # --- Helm version test ---
 echo ""
 echo "🔢 Helm Version Validation"
 run_test "helm version output" \
-    "docker run --rm --entrypoint helm helmkit-actions version --short | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+'"
+    "helm version --short | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+'"
 
 # --- Helmfile version test ---
 echo ""
 echo "🔢 Helmfile Version Validation"
 run_test "helmfile version output" \
-    "docker run --rm --entrypoint helmfile helmkit-actions --version | grep -E '[0-9]+\.[0-9]+\.[0-9]+'"
+    "helmfile --version | grep -E '[0-9]+\.[0-9]+\.[0-9]+'"
 
 # --- Helm lint test ---
 echo ""
 echo "📋 Helm Lint Tests"
 run_test "helm lint test-chart" \
-    "docker run --rm -v $PWD:/workspace --entrypoint helm helmkit-actions lint tests/test-chart/"
+    "helm lint tests/test-chart/"
 run_test "helm template test-chart" \
-    "docker run --rm -v $PWD:/workspace --entrypoint helm helmkit-actions template test-release tests/test-chart/ | grep -q 'kind: ConfigMap'"
+    "helm template test-release tests/test-chart/ | grep -q 'kind: ConfigMap'"
 
 # --- Helmfile lint test ---
 echo ""
 echo "📋 Helmfile Lint Tests"
 run_test "helmfile lint test-helmfile" \
-    "docker run --rm -v $PWD:/workspace --entrypoint helmfile helmkit-actions -f tests/helmfile.yaml lint"
+    "helmfile -f tests/helmfile.yaml lint"
 
-# --- Security tests (running as root) ---
+# --- Security tests ---
 echo ""
 echo "🔒 Security Validation"
-run_test "running as root (uid 0)" \
-    "docker run --rm --entrypoint id helmkit-actions -u | grep -q '^0$'"
+run_test "not running as root" \
+    "[ \"\$(id -u)\" != '0' ]"
+run_test "no setuid binaries in /usr/local/bin" \
+    "! find /usr/local/bin -perm /4000 | grep -q ."
 
 # --- Summary ---
 echo ""
