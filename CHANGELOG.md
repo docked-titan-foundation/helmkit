@@ -1,3 +1,10 @@
+## [1.5.6](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.5...v1.5.6) (2026-04-18)
+
+
+### Bug Fixes
+
+* **actions:** simplify entrypoint to pass through arguments ([1dbb508](https://github.com/docked-titan-foundation/helmkit/commit/1dbb508fd4cf56b5c18a9dc9babcfb5af59f275c))
+
 ## [1.5.5](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.4...v1.5.5) (2026-04-18)
 
 
