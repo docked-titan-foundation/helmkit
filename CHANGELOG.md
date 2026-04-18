@@ -1,3 +1,39 @@
+## [1.5.6](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.5...v1.5.6) (2026-04-18)
+
+
+### Bug Fixes
+
+* **actions:** simplify entrypoint to pass through arguments ([1dbb508](https://github.com/docked-titan-foundation/helmkit/commit/1dbb508fd4cf56b5c18a9dc9babcfb5af59f275c))
+
+## [1.5.5](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.4...v1.5.5) (2026-04-18)
+
+
+### Bug Fixes
+
+* **actions:** set default GITHUB_OUTPUT path when environment variable is empty ([84e257a](https://github.com/docked-titan-foundation/helmkit/commit/84e257a7c4a3b072e5698fd2bbb3eb834992c072))
+
+## [1.5.4](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.3...v1.5.4) (2026-04-18)
+
+
+### Bug Fixes
+
+* **ci:** add GHCR login step to build job before pushing images ([17298a2](https://github.com/docked-titan-foundation/helmkit/commit/17298a2fb3841ae8d96d873df0cc0c02f31b9bcb))
+
+## [1.5.3](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.2...v1.5.3) (2026-04-18)
+
+
+### Bug Fixes
+
+* **ci:** remove redundant cosign sign commands in SBOM attestation steps ([9e5fc49](https://github.com/docked-titan-foundation/helmkit/commit/9e5fc49e6cf0da2d8ebe4b0210ef4fb226d4e02b))
+
+## [1.5.2](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.1...v1.5.2) (2026-04-18)
+
+
+### Bug Fixes
+
+* **ci:** ensure pushed image digest matches scanned image for supply-chain integrity ([0791d1f](https://github.com/docked-titan-foundation/helmkit/commit/0791d1fb83984e6c0a0a80542032bba0d7bfabde))
+* **ci:** use correct input 'file' instead of 'dockerfile' in build-push-action ([898f087](https://github.com/docked-titan-foundation/helmkit/commit/898f0875ee5ed9137d3faa7006f49f1f4ce6906d))
+
 ## [1.5.1](https://github.com/docked-titan-foundation/helmkit/compare/v1.5.0...v1.5.1) (2026-04-18)
 
 
