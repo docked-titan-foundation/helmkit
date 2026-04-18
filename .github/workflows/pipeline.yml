@@ -102,6 +102,9 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     if: needs.release.result == 'success' && needs.release.outputs.new_release_published == 'true'
+    outputs:
+      main_image_digest: ${{ steps.push-main.outputs.digest }}
+      actions_image_digest: ${{ steps.push-actions.outputs.digest }}
     permissions:
       contents: write
       packages: write
@@ -249,6 +252,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push verified image
+        id: push-main
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -266,6 +270,7 @@ jobs:
             org.opencontainers.image.title=${{ github.event.repository.name }}
 
       - name: Push actions image
+        id: push-actions
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -288,23 +293,32 @@ jobs:
       contents: write
       attestations: write
       id-token: write
+      artifact-metadata: write
       packages: write
     steps:
       - name: Attest main image
         uses: actions/attest-build-provenance@v4
         with:
-          subject: ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ needs.build.outputs.main_image_digest }}
+          push-to-registry: true
+          create-storage-record: true
+
 
       - name: Attest actions image
         uses: actions/attest-build-provenance@v4
         with:
-          subject: ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+          subject-name: ghcr.io/${{ github.repository }}/actions
+          subject-digest: ${{ needs.build.outputs.actions_image_digest }}
+          push-to-registry: true
+          create-storage-record: true
+
 
    # ─── GATE 9: Sign ─────────────────────────────────────────────────
   sign:
-    needs: [release, build]
+    needs: [release, build, attest]
     runs-on: ubuntu-latest
-    if: needs.build.result == 'success'
+    if: needs.build.result == 'success' && needs.attest.result == 'success'
     permissions:
       id-token: write
       packages: write

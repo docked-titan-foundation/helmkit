@@ -222,6 +222,7 @@ This roadmap tracks the progress of the Helmkit Docker Image.
   - [x] Helmkit
   - [x] Helmkit Actions
 - [x] Funding
+- [x] Attestation of the docker images
 - [x] Version Matrix Automated
 
 ## 🚧 In Progress
