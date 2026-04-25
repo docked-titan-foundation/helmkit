@@ -130,6 +130,17 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract metadata for main image
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.release.outputs.new_release_version }}
+            type=semver,pattern={{major}},value=${{ needs.release.outputs.new_release_version }}
+            type=semver,pattern={{major.minor}},value=${{ needs.release.outputs.new_release_version }}
+            type=raw,value=latest,enable={{is_default_branch}}
+
       - name: Build and push main image
         id: build-main
         uses: docker/build-push-action@v7
@@ -140,14 +151,24 @@ jobs:
             BUILD_DATE=${{ github.event.repository.updated_at }}
             VCS_REF=${{ github.sha }}
             APP_VERSION=${{ needs.release.outputs.new_release_version }}
-          tags: |
-            ghcr.io/${{ github.repository }}:v${{ needs.release.outputs.new_release_version }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.version=${{ needs.release.outputs.new_release_version }}
             org.opencontainers.image.title=${{ github.event.repository.name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Extract metadata for actions image
+        id: meta-actions
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/actions
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.release.outputs.new_release_version }}
+            type=semver,pattern={{major}},value=${{ needs.release.outputs.new_release_version }}
+            type=semver,pattern={{major.minor}},value=${{ needs.release.outputs.new_release_version }}
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push actions image
         id: build-actions
@@ -156,8 +177,7 @@ jobs:
           context: .
           file: Dockerfile.action
           push: true
-          tags: |
-            ghcr.io/${{ github.repository }}/actions:v${{ needs.release.outputs.new_release_version }}
+          tags: ${{ steps.meta-actions.outputs.tags }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.version=${{ needs.release.outputs.new_release_version }}
