@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/docked-titan-foundation/helmkit/compare/v1.4.0...v1.4.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* properly handle args with spaces in action entrypoint ([2b77885](https://github.com/docked-titan-foundation/helmkit/commit/2b77885dd2f93ce082e91636c9eff73d29a793cb))
+
 # [1.4.0](https://github.com/docked-titan-foundation/helmkit/compare/v1.3.0...v1.4.0) (2026-04-19)
 
 
