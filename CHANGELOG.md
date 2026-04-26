@@ -1,3 +1,10 @@
+## [1.4.2](https://github.com/docked-titan-foundation/helmkit/compare/v1.4.1...v1.4.2) (2026-04-26)
+
+
+### Bug Fixes
+
+* ensure docker image tags include 'v' prefix in metadata-action ([e5c3730](https://github.com/docked-titan-foundation/helmkit/commit/e5c37304381900d8326935a01585bdc90701a8d8))
+
 ## [1.4.1](https://github.com/docked-titan-foundation/helmkit/compare/v1.4.0...v1.4.1) (2026-04-25)
 
 
