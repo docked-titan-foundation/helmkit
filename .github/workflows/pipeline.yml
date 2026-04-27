@@ -132,7 +132,7 @@ jobs:
 
       - name: Extract metadata for main image
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
@@ -161,7 +161,7 @@ jobs:
 
       - name: Extract metadata for actions image
         id: meta-actions
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository }}/actions
           tags: |
