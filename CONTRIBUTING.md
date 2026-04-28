@@ -52,6 +52,68 @@ Contributions are welcome! Please read this guide to get started.
 6. Push to your fork (`git push origin feature/my-feature`)
 7. Open a Pull Request
 
+## Beta Testing
+
+For pre-release beta testing, all pull requests must target the **beta** branch. The beta branch receives pre-release versions before changes are merged into the main branch for stable releases.
+
+- To test beta releases, pull the latest changes from the beta branch
+- Beta versions are published with pre-release tags (e.g., `1.5.0-beta.1`)
+- All features and fixes intended for the next stable release should first be merged into the beta branch for testing
+- Once validated, changes will be promoted from beta to main via the release process
+
+## Semantic Release (SR) Process
+
+This project uses [Semantic Release](https://semantic-release.gitbook.io/) for automated versioning and package publishing. The release process follows conventional commit standards with Angular-style formatting.
+
+### Branch Strategy
+- **`main` branch**: Stable releases only. Direct pushes to main are restricted; all changes flow through the beta branch first.
+- **`beta` branch**: Pre-release testing ground. Features and fixes are merged here for beta testing before promotion to main.
+
+### Versioning
+Version bumps are tied to Dockerfile sub-tool version changes. A release only produces a new version tag when at least one tool version in the Dockerfile has changed:
+
+- **Patch release** (`1.0.X`): Sub-tool patch version changes (e.g., `HELM_VERSION` from `4.1.4` → `4.1.5`)
+- **Minor release** (`1.X.0`): Sub-tool minor version changes (e.g., `KUBECTL_VERSION` from `1.33.9` → `1.34.0`)
+- **Major release** (`X.0.0`): Sub-tool major version changes or breaking changes (e.g., `HELMFILE_VERSION` from `1.4.4` → `2.0.0`)
+
+Beta releases use pre-release tags (e.g., `1.5.0-beta.0`, `1.5.0-beta.1`).
+
+### Conventional Commits
+All commits must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification with Angular-style formatting:
+
+- Format: `<type>(<scope>): <description>`
+- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`, `build`, `revert`
+- Scope indicates the affected pipeline/tool (e.g., `pipeline`, `docker`, `helm`, etc.)
+- Breaking changes must be indicated with `!` after type/scope or `BREAKING CHANGE:` in footer
+- Example: `feat(pipeline): add beta branch support`
+
+### Commit Types and Release Rules
+Commits are categorized into two groups for release triggering:
+
+**Version-bumping commits** — These trigger a release based on the sub-tool version change:
+- Use `feat` for new sub-tool capabilities or minor version bumps (e.g., `feat(docker): bump HELM_VERSION 4.1.4 → 4.1.5` results in patch release when only patch level changes)
+- Use `fix` for sub-tool bug fixes or patch version bumps (e.g., `fix(docker): update KUBECTL_VERSION 1.33.9 → 1.33.10`)
+- Use `perf` for sub-tool performance-related updates
+- Use `feat!` or `BREAKING CHANGE:` footer for major version bumps or breaking changes
+
+**Non-release commits** — These improve the project without triggering a release. Use for:
+- `chore` — maintenance tasks, dependency updates (non-sub-tool), CI/CD config
+- `refactor` — code restructuring without functional changes
+- `docs` — documentation updates
+- `style` — formatting, lint fixes
+- `test` — test additions/updates
+- `ci` — CI configuration updates
+- `build` — build system changes
+
+### Release Triggers
+- A new release is triggered automatically on push to `main` or `beta` branches
+- `semantic-release` analyzes commits since the last tag to determine the version bump
+- The version matrix is auto-generated based on Dockerfile sub-tool versions
+- Versions in other places (labels, configs, etc.) are updated automatically
+- Changelog is auto-generated from commit messages
+- Docker images are built, tested, scanned, signed, and pushed to GitHub Container Registry
+- SBOM (Software Bill of Materials) is generated and signed for each release
+
 ## Checksum Verification Process
 All binary downloads must have their SHA256 verified.
 Obtain checksums from the official release page, never from third-party sources.

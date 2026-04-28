@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/docked-titan-foundation/helmkit/compare/v1.4.2...v1.5.0) (2026-04-28)
+
+
+### Features
+
+* add commit lint (Angular conventional format) ([af8ab6d](https://github.com/docked-titan-foundation/helmkit/commit/af8ab6db140520f95615128424b480c3fedea1fa))
+
 ## [1.4.2](https://github.com/docked-titan-foundation/helmkit/compare/v1.4.1...v1.4.2) (2026-04-26)
 
 

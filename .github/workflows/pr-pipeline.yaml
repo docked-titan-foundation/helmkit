@@ -7,37 +7,37 @@ on:
 
 jobs:
   # ─── Gate 1: Code Quality ──────────────────────────────────────────
-   lint:
-     runs-on: ubuntu-latest
-     steps:
-       - uses: actions/checkout@v6
-         with:
-           fetch-depth: 0
-
-      - name: Lint Dockerfile
-        uses: hadolint/hadolint-action@v3.3.0
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
         with:
-          dockerfile: Dockerfile
+          fetch-depth: 0
 
-      - name: Lint actions Dockerfile
-        uses: hadolint/hadolint-action@v3.3.0
-        with:
-          dockerfile: Dockerfile.action
+    - name: Lint Dockerfile
+      uses: hadolint/hadolint-action@v3.3.0
+      with:
+        dockerfile: Dockerfile
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
+    - name: Lint actions Dockerfile
+      uses: hadolint/hadolint-action@v3.3.0
+      with:
+        dockerfile: Dockerfile.action
 
-       - name: Install dependencies
-         run: npm install
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: '24'
 
-       - name: Lint commit messages
-         run: |
-           npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+      - name: Install dependencies
+        run: npm install
 
-       - name: Validate semantic release configuration
-         run: ./scripts/validate-release-config.sh
+      - name: Lint commit messages
+        run: |
+          npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+      - name: Validate semantic release configuration
+        run: ./scripts/validate-release-config.sh
 
   # ─── Gate 2: Semantic Release Config Check ─────────────────────────
   # Goals:
