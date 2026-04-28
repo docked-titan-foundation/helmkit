@@ -24,7 +24,7 @@ Helmkit provides a lightweight Alpine-based Docker image with Helm, Helmfile, ku
 
 | Version | Helm | Helmfile | Kubectl | Helm Diff | Helm Secrets | SOPS | Date |
 |-----------------|--------|-------|--------|--------|-------|--------|-------|
-| 1.4.2 (latest) | 4.1.4 | 1.4.4 | 1.33.9 | 3.15.5 | 4.7.4 | 3.12.2 | 2026-04-26|
+| 1.4.2 (latest) | 4.1.4 | 1.4.4 | 1.33.9 | 3.15.5 | 4.7.4 | 3.12.2 | 2026-04-28|
 | 1.4.1 | 4.1.4 | 1.4.4 | 1.33.9 | 3.15.5 | 4.7.4 | 3.12.2 | 2026-04-25|
 | 1.4.0 | 4.1.4 | 1.4.4 | 1.33.9 | 3.15.5 | 4.7.4 | 3.12.2 | 2026-04-19|
 | 1.3.0 | 4.1.4 | 1.4.4 | 1.33.9 | 3.15.5 | 4.7.4 | 3.12.2 | 2026-04-15|
@@ -207,6 +207,7 @@ This roadmap tracks the progress of the Helmkit Docker Image.
   - [x] main CI/CD
   - [x] PR CI/CD
 - [x] Pre commit configurations
+    - [x] Commitlint
     - [x] Lint Dockerfile
     - [x] Build Dockerfile
       - [x] Helmkit
@@ -240,7 +241,6 @@ This roadmap tracks the progress of the Helmkit Docker Image.
 - [ ] Layer Optimization and Cache Efficiency
 - [ ] Rebuild workflow
 - [ ] More Integration testing scenarios
-- [ ] Add commitlint
 
 ## 📜 License
 

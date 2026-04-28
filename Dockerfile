@@ -16,6 +16,7 @@ ENV HELMFILE_VERSION=${HELMFILE_VERSION}
 ENV KUBECTL_VERSION=${KUBECTL_VERSION}
 ENV SOPS_VERSION=${SOPS_VERSION}
 
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     curl \
     ca-certificates \
@@ -85,7 +86,7 @@ RUN mkdir -p ~/.config/helm/keys && \
 ARG HELM_DIFF_VERSION=3.15.5
 ARG HELM_SECRETS_VERSION=4.7.4
 
-# Runtime-only dependencies (minimal)
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     git && \
     # Remove package cache
@@ -115,7 +116,7 @@ LABEL org.opencontainers.image.title="helmkit" \
       org.opencontainers.image.licenses="GPL-3.0" \
       org.opencontainers.image.vendor="Docked Titan Foundation"
 
-# Runtime-only dependencies (minimal)
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     ca-certificates \
     git \

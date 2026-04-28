@@ -1,18 +1,13 @@
 ---
 repos:
-  - repo: https://github.com/hadolint/hadolint
-    rev: v2.12.0
-    hooks:
-      - id: hadolint-docker
   - repo: local
     hooks:
-      - id: hadolint-main
-        name: Lint main Dockerfile
-        entry: sh
-        args: ["-c", "docker run --rm -v $PWD:/workspace -w /workspace helmkit-test sh -c 'apk add --no-cache npm && npm install -g hadolint && hadolint Dockerfile'"]
+      - id: commitlint
+        name: commitlint
+        entry: npx commitlint --edit
         language: system
-        stages: [pre-commit]
-        files: ^Dockerfile$
+        stages: [commit-msg]
+        pass_filenames: true
       - id: docker-build
         name: Build Docker image
         entry: sh
@@ -20,17 +15,24 @@ repos:
         language: system
         stages: [pre-commit]
         files: ^Dockerfile$
-      - id: hadolint-actions
-        name: Lint actions Dockerfile
-        entry: sh
-        args: ["-c", "docker run --rm -v $PWD:/workspace -w /workspace helmkit-test sh -c 'apk add --no-cache npm && npm install -g hadolint && hadolint Dockerfile.action'"]
-        language: system
-        stages: [pre-commit]
-        files: ^Dockerfile.action$
       - id: docker-action-build
         name: Build Docker Actions image
         entry: sh
         args: ["-c", "DOCKER_BUILDKIT=0 docker build -t helmkit-action-test -f Dockerfile.action ."]
+        language: system
+        stages: [pre-commit]
+        files: ^Dockerfile.action$
+      - id: hadolint-main
+        name: Lint main Dockerfile
+        entry: sh
+        args: ["-c", "docker run --rm -i hadolint/hadolint < Dockerfile"]
+        language: system
+        stages: [pre-commit]
+        files: ^Dockerfile$
+      - id: hadolint-actions
+        name: Lint actions Dockerfile
+        entry: sh
+        args: ["-c", "docker run --rm -i hadolint/hadolint < Dockerfile.action"]
         language: system
         stages: [pre-commit]
         files: ^Dockerfile.action$
@@ -48,11 +50,3 @@ repos:
         stages: [pre-commit]
         files: ^(\.releaserc|scripts/update-versions\.sh|README\.md|action\.yml|scripts/validate-release-config\.sh)$
         pass_filenames: false
-  - repo: local
-    hooks:
-      - id: commitlint
-        name: commitlint
-        entry: npx commitlint --edit
-        language: system
-        stages: [commit-msg]
-        pass_filenames: true

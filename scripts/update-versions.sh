@@ -1,12 +1,17 @@
 #!/bin/bash
 
-RELEASE_VERSION="$1"
 DOCKERFILE="Dockerfile"
 README="README.md"
 
-if [ -z "$RELEASE_VERSION" ]; then
-    echo "Usage: $0 <release-version>"
-    exit 1
+# Get latest version tag if not provided as argument
+if [ -z "$1" ]; then
+    RELEASE_VERSION=$(git tag --sort=-v:refname | head -1 | sed 's/^v//')
+    if [ -z "$RELEASE_VERSION" ]; then
+        echo "Error: Could not determine latest version from git tags"
+        exit 1
+    fi
+else
+    RELEASE_VERSION="$1"
 fi
 
 if [ ! -f "$DOCKERFILE" ]; then
@@ -39,6 +44,9 @@ echo "Updated version matrix in README.md with version $RELEASE_VERSION"
 
 sed -i "s|ghcr.io/docked-titan-foundation/helmkit/actions:[^ ]*\"|ghcr.io/docked-titan-foundation/helmkit/actions:v${RELEASE_VERSION}\"|g" action.yml || true
 
+sed -i "s|ghcr.io/docked-titan-foundation/helmkit:v${RELEASE_VERSION}|g" Dockerfile.action || true
+
 echo "Updated action.yml to use v$RELEASE_VERSION"
+echo "Updated Dockerfile.action to use v$RELEASE_VERSION"
 
 exit 0
