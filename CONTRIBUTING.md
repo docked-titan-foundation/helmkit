@@ -91,10 +91,14 @@ All commits must follow the [Conventional Commits](https://www.conventionalcommi
 Commits are categorized into two groups for release triggering:
 
 **Version-bumping commits** — These trigger a release based on the sub-tool version change:
-- Use `feat` for new sub-tool capabilities or minor version bumps (e.g., `feat(docker): bump HELM_VERSION 4.1.4 → 4.1.5` results in patch release when only patch level changes)
-- Use `fix` for sub-tool bug fixes or patch version bumps (e.g., `fix(docker): update KUBECTL_VERSION 1.33.9 → 1.33.10`)
+- Use `feat` for new sub-tool capabilities or minor version bumps
+  (e.g., `feat(docker): bump HELM_VERSION 4.1.4 → 4.1.5` results in
+  patch release when only patch level changes)
+- Use `fix` for sub-tool bug fixes or patch version bumps
+  (e.g., `fix(docker): update KUBECTL_VERSION 1.33.9 → 1.33.10`)
 - Use `perf` for sub-tool performance-related updates
-- Use `feat!` or `BREAKING CHANGE:` footer for major version bumps or breaking changes
+- Use `feat!` or `BREAKING CHANGE:` footer for major version bumps
+  or breaking changes
 
 **Non-release commits** — These improve the project without triggering a release. Use for:
 - `chore` — maintenance tasks, dependency updates (non-sub-tool), CI/CD config
