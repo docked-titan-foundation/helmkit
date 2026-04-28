@@ -11,20 +11,34 @@ concurrency:
 
 jobs:
   # ─── GATE 1: Code Quality ─────────────────────────────────────────
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
+   lint:
+     runs-on: ubuntu-latest
+     steps:
+       - uses: actions/checkout@v6
+         with:
+           fetch-depth: 0
 
-      - name: Lint Dockerfile
-        uses: hadolint/hadolint-action@v3.3.0
-        with:
-          dockerfile: Dockerfile
+       - name: Lint Dockerfile
+         uses: hadolint/hadolint-action@v3.3.0
+         with:
+           dockerfile: Dockerfile
 
-      - name: Lint actions Dockerfile
-        uses: hadolint/hadolint-action@v3.3.0
-        with:
-          dockerfile: Dockerfile.action
+       - name: Lint actions Dockerfile
+         uses: hadolint/hadolint-action@v3.3.0
+         with:
+           dockerfile: Dockerfile.action
+
+       - name: Setup Node.js
+         uses: actions/setup-node@v6
+         with:
+           node-version: '24'
+
+       - name: Install dependencies
+         run: npm install
+
+       - name: Lint commit messages
+         run: |
+           npx commitlint --from ${{ github.event.before }} --to ${{ github.sha }} --verbose
 
   # ─── GATE 2: Versioning (only on main) ────────────────────────────
   release:

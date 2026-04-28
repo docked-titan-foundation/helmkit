@@ -48,3 +48,11 @@ repos:
         stages: [pre-commit]
         files: ^(\.releaserc|scripts/update-versions\.sh|README\.md|action\.yml|scripts/validate-release-config\.sh)$
         pass_filenames: false
+  - repo: local
+    hooks:
+      - id: commitlint
+        name: commitlint
+        entry: npx commitlint --edit
+        language: system
+        stages: [commit-msg]
+        pass_filenames: true
