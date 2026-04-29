@@ -1,4 +1,4 @@
-FROM ghcr.io/docked-titan-foundation/helmkit:v0.0.0
+FROM ghcr.io/docked-titan-foundation/helmkit:v1.0.0
 
 LABEL maintainer="HelmKit"
 LABEL description="HelmKit Actions"
