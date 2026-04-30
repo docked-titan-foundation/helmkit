@@ -7,7 +7,7 @@ DEBUG         ?= 0
 .PHONY: all build test precommit clean verify scan helm help commitlint hadolint
 
 # Capture arguments after the target name for commitlint
-COMMITLINT_ARGS := $(filter-out $@,$(MAKECMDGOALS))
+COMMITLINT_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
 all: precommit
 
