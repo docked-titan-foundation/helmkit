@@ -19,12 +19,7 @@ jobs:
       with:
         dockerfile: Dockerfile
 
-    - name: Lint actions Dockerfile
-      uses: hadolint/hadolint-action@v3.3.0
-      with:
-        dockerfile: Dockerfile.action
-
-    - name: Setup Node.js
+      - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
         node-version: '24'
@@ -97,6 +92,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          target: runtime
           push: false
           load: true
           build-args: |
@@ -108,7 +104,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          dockerfile: Dockerfile.action
+          target: actions
           push: false
           load: true
           tags: helmkit-actions:pr-test

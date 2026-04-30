@@ -44,9 +44,6 @@ echo "Updated version matrix in README.md with version $RELEASE_VERSION"
 
 sed -i "s|ghcr.io/docked-titan-foundation/helmkit/actions:[^ ]*\"|ghcr.io/docked-titan-foundation/helmkit/actions:v${RELEASE_VERSION}\"|g" action.yml || true
 
-sed -i "s|ghcr.io/docked-titan-foundation/helmkit:v[^ ]*|ghcr.io/docked-titan-foundation/helmkit:v${RELEASE_VERSION}|g" Dockerfile.action || true
-
 echo "Updated action.yml to use v$RELEASE_VERSION"
-echo "Updated Dockerfile.action to use v$RELEASE_VERSION"
 
 exit 0

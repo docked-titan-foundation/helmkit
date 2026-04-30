@@ -75,8 +75,11 @@ RUN ARCH=$(uname -m) && \
 # ============================================================
 FROM fetcher AS plugin-installer
 
-COPY --from=fetcher /usr/local/bin/helm /usr/local/bin/helm
+# Use system-wide plugin directory accessible to non-root users
+ENV HELM_PLUGINS=/usr/local/share/helm/plugins
+RUN mkdir -p "${HELM_PLUGINS}"
 
+# Import GPG keys for plugin verification
 RUN mkdir -p ~/.config/helm/keys && \
     curl -fsSL https://github.com/jkroepke.gpg -o ~/.config/helm/keys/jkroepke.gpg.raw && \
     gpg --dearmor < ~/.config/helm/keys/jkroepke.gpg.raw > ~/.config/helm/keys/jkroepke.gpg && \
@@ -89,9 +92,9 @@ ARG HELM_SECRETS_VERSION=4.7.4
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
     git && \
-    # Remove package cache
     rm -rf /var/cache/apk/*
 
+# Install plugins to system-wide directory
 RUN helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION} --verify=false && \
     helm plugin install https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-${HELM_SECRETS_VERSION}.tgz --keyring ~/.config/helm/keys/jkroepke.gpg && \
     helm plugin install https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-getter-${HELM_SECRETS_VERSION}.tgz --keyring ~/.config/helm/keys/jkroepke.gpg && \
@@ -124,28 +127,33 @@ RUN apk add --no-cache \
     gnupg \
     age \
     bash && \
-    # Remove package cache
     rm -rf /var/cache/apk/*
 
-# Copy verified binaries from builder stages
+# Copy verified binaries from fetcher stage
 COPY --from=fetcher /usr/local/bin/helm      /usr/local/bin/helm
 COPY --from=fetcher /usr/local/bin/helmfile  /usr/local/bin/helmfile
 COPY --from=fetcher /usr/local/bin/kubectl   /usr/local/bin/kubectl
+COPY --from=fetcher /usr/local/bin/sops      /usr/local/bin/sops
 
-# Copy Helm plugins from plugin stage
-COPY --from=plugin-installer /root/.local/share/helm/plugins \
-     /home/helmkit/.local/share/helm/plugins
+# Copy Helm plugins from plugin-installer stage (system-wide location)
+COPY --from=plugin-installer /usr/local/share/helm/plugins /usr/local/share/helm/plugins
 
-# Create non-root user
+# Create non-root user and set permissions
 RUN addgroup -g 1000 helmkit && \
     adduser -u 1000 -G helmkit -s /bin/bash -D helmkit && \
     mkdir -p /workspace /home/helmkit/.kube /home/helmkit/.config/helm && \
-    chown -R helmkit:helmkit /workspace /home/helmkit
+    chown -R helmkit:helmkit /workspace /home/helmkit && \
+    chown -R helmkit:helmkit /usr/local/share/helm/plugins && \
+    chmod -R 755 /usr/local/share/helm/plugins
+
+# Set plugin environment
+ENV HELM_PLUGINS=/usr/local/share/helm/plugins
 
 # Set secure filesystem permissions
 RUN chmod 755 /usr/local/bin/helm \
               /usr/local/bin/helmfile \
-              /usr/local/bin/kubectl
+              /usr/local/bin/kubectl \
+              /usr/local/bin/sops
 
 WORKDIR /workspace
 USER helmkit
@@ -156,3 +164,16 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 ENTRYPOINT ["/bin/bash", "-c"]
 CMD ["helm version && helmfile --version && kubectl version --client"]
+
+# ============================================================
+# Stage 4: Actions Image
+# ============================================================
+FROM runtime AS actions
+
+# hadolint ignore=DL3002
+USER root
+COPY scripts/action/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+USER helmkit
+ENTRYPOINT ["/entrypoint.sh"]

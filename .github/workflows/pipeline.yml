@@ -23,11 +23,6 @@ jobs:
         with:
           dockerfile: Dockerfile
 
-      - name: Lint actions Dockerfile
-        uses: hadolint/hadolint-action@v3.3.0
-        with:
-          dockerfile: Dockerfile.action
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -160,6 +155,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          target: runtime
           push: true
           build-args: |
             BUILD_DATE=${{ github.event.repository.updated_at }}
@@ -189,7 +185,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: Dockerfile.action
+          target: actions
           push: true
           tags: ${{ steps.meta-actions.outputs.tags }}
           labels: |

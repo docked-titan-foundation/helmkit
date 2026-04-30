@@ -55,7 +55,7 @@ The HelmKit Actions image is a reusable GitHub Action based on the HelmKit image
 
 ```bash
 # Build the actions image
-docker build -t ghcr.io/docked-titan-foundation/helmkit/actions:latest actions/
+docker build -t ghcr.io/docked-titan-foundation/helmkit/actions:latest --target actions .
 
 # Run Helm commands
 docker run --rm -v $(pwd):/workspace ghcr.io/docked-titan-foundation/helmkit/actions:latest helm version

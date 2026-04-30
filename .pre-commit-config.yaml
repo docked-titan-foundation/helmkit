@@ -15,13 +15,6 @@ repos:
         language: system
         stages: [pre-commit]
         files: ^Dockerfile$
-      - id: docker-action-build
-        name: Build Docker Actions image
-        entry: sh
-        args: ["-c", "DOCKER_BUILDKIT=0 docker build -t helmkit-action-test -f Dockerfile.action ."]
-        language: system
-        stages: [pre-commit]
-        files: ^Dockerfile.action$
       - id: hadolint-main
         name: Lint main Dockerfile
         entry: sh
@@ -29,17 +22,27 @@ repos:
         language: system
         stages: [pre-commit]
         files: ^Dockerfile$
-      - id: hadolint-actions
-        name: Lint actions Dockerfile
+      - id: integration-test-runtime
+        name: Run runtime integration tests
         entry: sh
-        args: ["-c", "docker run --rm -i hadolint/hadolint < Dockerfile.action"]
+        args:
+          - -c
+          - |
+            docker build --target runtime -t helmkit-runtime .
+            docker run --rm -v ${PWD}/tests:/workspace/tests:ro helmkit-runtime \
+              bash /workspace/tests/integration/test-helmkit.sh
         language: system
         stages: [pre-commit]
-        files: ^Dockerfile.action$
-      - id: integration-test
-        name: Run integration tests
+        always_run: true
+      - id: integration-test-actions
+        name: Run actions integration tests
         entry: sh
-        args: ["-c", "docker run --rm -v ./tests/integration/test-helmkit.sh:/workspace/tests/integration/test-helmkit.sh:ro helmkit-test /bin/bash /workspace/tests/integration/test-helmkit.sh && ./tests/integration/test-actions.sh"]
+        args:
+          - -c
+          - |
+            docker build --target actions -t helmkit-actions .
+            docker run --rm -v ${PWD}/tests:/workspace/tests:ro helmkit-actions \
+              bash /workspace/tests/integration/test-actions.sh
         language: system
         stages: [pre-commit]
         always_run: true

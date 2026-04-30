@@ -15,19 +15,19 @@ run_test() {
     if eval "$cmd" > /tmp/test_output 2>&1; then
         if [ "$expected" -eq 0 ]; then
             echo "✅ PASS"
-            ((PASS++))
+            PASS=$((PASS + 1))
         else
             echo "❌ FAIL (expected failure but passed)"
-            ((FAIL++))
+            FAIL=$((FAIL + 1))
         fi
     else
         if [ "$expected" -ne 0 ]; then
             echo "✅ PASS (expected failure)"
-            ((PASS++))
+            PASS=$((PASS + 1))
         else
             echo "❌ FAIL"
             cat /tmp/test_output
-            ((FAIL++))
+            FAIL=$((FAIL + 1))
         fi
     fi
 }
@@ -66,7 +66,7 @@ run_test "not running as root" \
 run_test "no setuid binaries in /usr/local/bin" \
     "! find /usr/local/bin -perm /4000 | grep -q ."
 run_test "helm binary is not world-writable" \
-    "! test -w /usr/local/bin/helm"
+    "! find /usr/local/bin/helm -perm /002 | grep -q ."
 
 # --- Functional tests ---
 echo ""
