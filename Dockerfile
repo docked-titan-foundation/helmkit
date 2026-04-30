@@ -77,14 +77,15 @@ FROM fetcher AS plugin-installer
 
 # Use system-wide plugin directory accessible to non-root users
 ENV HELM_PLUGINS=/usr/local/share/helm/plugins
+ENV HELM_DATA_HOME=/usr/local/share/helm
 RUN mkdir -p "${HELM_PLUGINS}"
 
 # Import GPG keys for plugin verification
-RUN mkdir -p ~/.config/helm/keys && \
-    curl -fsSL https://github.com/jkroepke.gpg -o ~/.config/helm/keys/jkroepke.gpg.raw && \
-    gpg --dearmor < ~/.config/helm/keys/jkroepke.gpg.raw > ~/.config/helm/keys/jkroepke.gpg && \
-    chmod 600 ~/.config/helm/keys/jkroepke.gpg && \
-    rm ~/.config/helm/keys/jkroepke.gpg.raw
+RUN mkdir -p /usr/local/share/helm/keys && \
+    curl -fsSL https://github.com/jkroepke.gpg -o /usr/local/share/helm/keys/jkroepke.gpg.raw && \
+    gpg --dearmor < /usr/local/share/helm/keys/jkroepke.gpg.raw > /usr/local/share/helm/keys/jkroepke.gpg && \
+    chmod 600 /usr/local/share/helm/keys/jkroepke.gpg && \
+    rm /usr/local/share/helm/keys/jkroepke.gpg.raw
 
 ARG HELM_DIFF_VERSION=3.15.5
 ARG HELM_SECRETS_VERSION=4.7.4
@@ -96,9 +97,9 @@ RUN apk add --no-cache \
 
 # Install plugins to system-wide directory
 RUN helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION} --verify=false && \
-    helm plugin install https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-${HELM_SECRETS_VERSION}.tgz --keyring ~/.config/helm/keys/jkroepke.gpg && \
-    helm plugin install https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-getter-${HELM_SECRETS_VERSION}.tgz --keyring ~/.config/helm/keys/jkroepke.gpg && \
-    helm plugin install https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-post-renderer-${HELM_SECRETS_VERSION}.tgz --keyring ~/.config/helm/keys/jkroepke.gpg
+    helm plugin install https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-${HELM_SECRETS_VERSION}.tgz --keyring /usr/local/share/helm/keys/jkroepke.gpg && \
+    helm plugin install https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-getter-${HELM_SECRETS_VERSION}.tgz --keyring /usr/local/share/helm/keys/jkroepke.gpg && \
+    helm plugin install https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-post-renderer-${HELM_SECRETS_VERSION}.tgz --keyring /usr/local/share/helm/keys/jkroepke.gpg
 
 # ============================================================
 # Stage 3: Final Runtime Image
@@ -141,13 +142,14 @@ COPY --from=plugin-installer /usr/local/share/helm/plugins /usr/local/share/helm
 # Create non-root user and set permissions
 RUN addgroup -g 1000 helmkit && \
     adduser -u 1000 -G helmkit -s /bin/bash -D helmkit && \
-    mkdir -p /workspace /home/helmkit/.kube /home/helmkit/.config/helm && \
+    mkdir -p /workspace /home/helmkit/.kube /home/helmkit/.config/helm /home/helmkit/.cache/helm && \
     chown -R helmkit:helmkit /workspace /home/helmkit && \
     chown -R helmkit:helmkit /usr/local/share/helm/plugins && \
     chmod -R 755 /usr/local/share/helm/plugins
 
 # Set plugin environment
 ENV HELM_PLUGINS=/usr/local/share/helm/plugins
+ENV HELM_CACHE_HOME=/home/helmkit/.cache/helm
 
 # Set secure filesystem permissions
 RUN chmod 755 /usr/local/bin/helm \
@@ -170,10 +172,29 @@ CMD ["helm version && helmfile --version && kubectl version --client"]
 # ============================================================
 FROM runtime AS actions
 
+ARG APP_VERSION="1.0.0"
+ARG BUILD_DATE
+ARG VCS_REF
+
+ENV HELM_PLUGINS=/usr/local/share/helm/plugins
+ENV HELM_CACHE_HOME=/home/helmkit/.cache/helm
+
+# OCI Image Spec Labels
+LABEL org.opencontainers.image.title="helmkit actions" \
+      org.opencontainers.image.description="Hardened Helm tooling image for CI/CD" \
+      org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.source="https://github.com/docked-titan-foundation/helmkit-action" \
+      org.opencontainers.image.licenses="GPL-3.0" \
+      org.opencontainers.image.vendor="Docked Titan Foundation"
+
+
+COPY scripts/action/entrypoint.sh /entrypoint.sh
+
 # hadolint ignore=DL3002
 USER root
-COPY scripts/action/entrypoint.sh /entrypoint.sh
+
 RUN chmod +x /entrypoint.sh
 
-USER helmkit
 ENTRYPOINT ["/entrypoint.sh"]

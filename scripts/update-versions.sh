@@ -45,5 +45,7 @@ echo "Updated version matrix in README.md with version $RELEASE_VERSION"
 sed -i "s|ghcr.io/docked-titan-foundation/helmkit/actions:[^ ]*\"|ghcr.io/docked-titan-foundation/helmkit/actions:v${RELEASE_VERSION}\"|g" action.yml || true
 
 echo "Updated action.yml to use v$RELEASE_VERSION"
+echo "Updating Makefile VERSION to v${RELEASE_VERSION}"
+sed -i -E "s/^(VERSION[[:space:]]*:=[[:space:]]*).*/\1v${RELEASE_VERSION}/" Makefile || true
 
 exit 0

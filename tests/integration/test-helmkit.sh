@@ -62,7 +62,7 @@ run_test "helm-secrets plugin installed" "helm plugin list | grep secrets"
 echo ""
 echo "🔒 Security Validation"
 run_test "not running as root" \
-    "[ \"\$(id -u)\" != '0' ]"
+    "[ \"$(id -u)\" != '0' ]"
 run_test "no setuid binaries in /usr/local/bin" \
     "! find /usr/local/bin -perm /4000 | grep -q ."
 run_test "helm binary is not world-writable" \
