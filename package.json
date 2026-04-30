@@ -4,7 +4,7 @@
   "description": "Helmkit - Kubernetes Helm management tool",
   "private": true,
   "devDependencies": {
-    "@commitlint/cli": "^17.8.1",
+    "@commitlint/cli": "^20.5.3",
     "@commitlint/config-conventional": "^17.8.1",
     "@semantic-release/changelog": "^6.0.0",
     "@semantic-release/commit-analyzer": "^13.0.0",
