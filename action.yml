@@ -28,7 +28,7 @@ outputs:
 
 runs:
   using: "docker"
-  image: "docker://ghcr.io/docked-titan-foundation/helmkit/actions:v0.0.0"
+  image: "docker://ghcr.io/docked-titan-foundation/helmkit/actions:v1.0.0"
   args:
     - ${{ inputs.tool }}
     - ${{ inputs.args }}
