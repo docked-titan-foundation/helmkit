@@ -3,7 +3,7 @@ name: PR Validation
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, beta]
 
 jobs:
   # ─── Gate 1: Code Quality ──────────────────────────────────────────

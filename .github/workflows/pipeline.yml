@@ -3,7 +3,7 @@ name: CI_CD
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, beta]
 
 concurrency:
   group: cicd-${{ github.ref }}
@@ -35,11 +35,11 @@ jobs:
         run: |
           npx commitlint --from ${{ github.event.before }} --to ${{ github.sha }} --verbose
 
-  # ─── GATE 2: Versioning (only on main) ────────────────────────────
+  # ─── GATE 2: Versioning (main and beta) ────────────────────────────
   release:
     needs: lint
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && !contains(github.actor, 'github-actions[bot]')
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta') && !contains(github.actor, 'github-actions[bot]')
     permissions:
       contents: write
       issues: write
