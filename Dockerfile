@@ -3,13 +3,13 @@
 # ============================================================
 FROM alpine:3.23@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11 AS fetcher
 
-ARG HELM_VERSION=4.1.4
-ARG HELMFILE_VERSION=1.4.4
-ARG KUBECTL_VERSION=1.33.9
-ARG SOPS_VERSION=3.12.2
-ARG HELM_SHA256="70b2c30a19da4db264dfd68c8a3664e05093a361cefd89572ffb36f8abfa3d09"
-ARG KUBECTL_SHA256="9e33e3234c0842cd44a12c13e334b4ce930145ea84b855ce7cc0a7b6bc670c22"
-ARG SOPS_SHA256="14e2e1ba3bef31e74b70cf0b674f6443c80f6c5f3df15d05ffc57c34851b4998"
+ARG HELM_VERSION=4.2.0
+ARG HELMFILE_VERSION=1.5.1
+ARG KUBECTL_VERSION=1.36.1
+ARG SOPS_VERSION=3.13.1
+ARG HELM_SHA256="97dbeb971be4ac4b27e3839976d9564c0fb35c6f3b1da89dd1e292d236af4096"
+ARG KUBECTL_SHA256="629d3f410e09bf49b64ae7079f7f0bda1191efed311f7d37fdbab0ad5b0ec2b7"
+ARG SOPS_SHA256="620a9d7e3352ababeca6908cea24a6e8b14ce89a448ddbd3f94f1ef3398f470a"
 
 ENV HELM_VERSION=${HELM_VERSION}
 ENV HELMFILE_VERSION=${HELMFILE_VERSION}
@@ -106,7 +106,7 @@ RUN helm plugin install https://github.com/databus23/helm-diff --version ${HELM_
 # ============================================================
 FROM alpine:3.23@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11 AS runtime
 
-ARG APP_VERSION="1.0.0"
+ARG APP_VERSION
 ARG BUILD_DATE
 ARG VCS_REF
 
@@ -172,7 +172,7 @@ CMD ["helm version && helmfile --version && kubectl version --client"]
 # ============================================================
 FROM runtime AS actions
 
-ARG APP_VERSION="1.0.0"
+ARG APP_VERSION
 ARG BUILD_DATE
 ARG VCS_REF
 
