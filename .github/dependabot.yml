@@ -5,6 +5,7 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
+    target-branch: "beta"
     commit-message:
       prefix: "fix(dependencies)"
     reviewers:
@@ -20,6 +21,7 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
+    target-branch: "beta"
     commit-message:
       prefix: "chore(dependencies)"
     reviewers:
@@ -35,6 +37,7 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
+    target-branch: "beta"
     commit-message:
       prefix: "chore(dependencies)"
     reviewers:
