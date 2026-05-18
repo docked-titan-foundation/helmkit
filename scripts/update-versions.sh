@@ -3,7 +3,6 @@
 DOCKERFILE="Dockerfile"
 README="README.md"
 
-# Get latest version tag if not provided as argument
 if [ -z "$1" ]; then
     RELEASE_VERSION=$(git tag --sort=-v:refname | head -1 | sed 's/^v//')
     if [ -z "$RELEASE_VERSION" ]; then
@@ -33,12 +32,28 @@ HELM_SECRETS_VERSION=$(grep -m1 'ARG HELM_SECRETS_VERSION=' "$DOCKERFILE" | sed 
 
 RELEASE_DATE=$(date +%Y-%m-%d)
 
-sed -i 's/ (latest)//' "$README" || true
-
-NEW_ROW="| $RELEASE_VERSION (latest) | $HELM_VERSION | $HELMFILE_VERSION | $KUBECTL_VERSION | $HELM_DIFF_VERSION | $HELM_SECRETS_VERSION | $SOPS_VERSION | $RELEASE_DATE|"
-
-sed -i "/^|-----------------|/a\\
-$NEW_ROW" "$README" || true
+if [[ "$RELEASE_VERSION" == *"beta"* ]]; then
+    sed -i 's/ (latest beta)//' "$README" || true
+    NEW_ROW="| $RELEASE_VERSION (latest beta) | $HELM_VERSION | $HELMFILE_VERSION | $KUBECTL_VERSION | $HELM_DIFF_VERSION | $HELM_SECRETS_VERSION | $SOPS_VERSION | $RELEASE_DATE|"
+    awk -v row="$NEW_ROW" '
+        /^### Beta Releases/ { found=1 }
+        found && /^\|[-]+.*\|[-]+\|$/ {
+            print; print row; found=0; next
+        }
+        { print }
+    ' "$README" > "$README.tmp" && mv "$README.tmp" "$README" || true
+else
+    sed -i 's/ (latest)//' "$README" || true
+    sed -i 's/ (latest beta)//' "$README" || true
+    NEW_ROW="| $RELEASE_VERSION (latest) | $HELM_VERSION | $HELMFILE_VERSION | $KUBECTL_VERSION | $HELM_DIFF_VERSION | $HELM_SECRETS_VERSION | $SOPS_VERSION | $RELEASE_DATE|"
+    awk -v row="$NEW_ROW" '
+        /^### Stable Releases/ { found=1 }
+        found && /^\|[-]+.*\|[-]+\|$/ {
+            print; print row; found=0; next
+        }
+        { print }
+    ' "$README" > "$README.tmp" && mv "$README.tmp" "$README" || true
+fi
 
 echo "Updated version matrix in README.md with version $RELEASE_VERSION"
 

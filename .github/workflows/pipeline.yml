@@ -145,10 +145,11 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=semver,pattern=v{{version}},value=${{ needs.release.outputs.new_release_version }}
-            type=semver,pattern=v{{major}},value=${{ needs.release.outputs.new_release_version }}
-            type=semver,pattern=v{{major.minor}},value=${{ needs.release.outputs.new_release_version }}
+            type=semver,pattern=v{{version}},value=${{ needs.release.outputs.new_release_version }},enable={{is_default_branch}}
+            type=semver,pattern=v{{major}},value=${{ needs.release.outputs.new_release_version }},enable={{is_default_branch}}
+            type=semver,pattern=v{{major.minor}},value=${{ needs.release.outputs.new_release_version }},enable={{is_default_branch}}
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=beta-latest,enable={{branch_name == 'beta'}}
 
       - name: Build and push main image
         id: build-main
@@ -175,10 +176,11 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}/actions
           tags: |
-            type=semver,pattern=v{{version}},value=${{ needs.release.outputs.new_release_version }}
-            type=semver,pattern=v{{major}},value=${{ needs.release.outputs.new_release_version }}
-            type=semver,pattern=v{{major.minor}},value=${{ needs.release.outputs.new_release_version }}
+            type=semver,pattern=v{{version}},value=${{ needs.release.outputs.new_release_version }},enable={{is_default_branch}}
+            type=semver,pattern=v{{major}},value=${{ needs.release.outputs.new_release_version }},enable={{is_default_branch}}
+            type=semver,pattern=v{{major.minor}},value=${{ needs.release.outputs.new_release_version }},enable={{is_default_branch}}
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=beta-latest,enable={{branch_name == 'beta'}}
 
       - name: Build and push actions image
         id: build-actions
