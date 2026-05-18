@@ -1,7 +1,7 @@
 # Makefile
 REGISTRY      := ghcr.io/docked-titan-foundation
 IMAGE_NAME    := helmkit
-VERSION       := v1.0.0
+VERSION       := v1.1.0-beta.1
 DEBUG         ?= 0
 
 .PHONY: all build test precommit clean verify scan helm help commitlint hadolint

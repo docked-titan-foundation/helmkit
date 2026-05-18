@@ -1,3 +1,10 @@
+# [1.1.0-beta.1](https://github.com/docked-titan-foundation/helmkit/compare/v1.0.0...v1.1.0-beta.1) (2026-05-18)
+
+
+### Features
+
+* **helmkit:** upgrade helm, kubectl, helmfile and sops versions ([7ce84bd](https://github.com/docked-titan-foundation/helmkit/commit/7ce84bd09421dcedb2117719f60d2abaa501994f))
+
 # 1.0.0 (2026-05-10)
 
 
